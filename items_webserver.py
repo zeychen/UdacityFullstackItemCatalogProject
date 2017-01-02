@@ -1,10 +1,10 @@
-from flask import Flask
+from flask import Flask, render_template
 app = Flask(__name__)
 
 # import database functions
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from items_db_setup import Base, Catagory, Item
+from items_db_setup import Base, Catagories, Items
 
 # Create session and connect to DB
 engine = create_engine('sqlite:///catagories.db')
@@ -16,26 +16,26 @@ session = DBSession()
 @app.route('/')
 @app.route('/catagories')
 def allCatagories():
-	return "This page will show all my catagories"
+	return "This page will show all catagories"
 
 
-@app.route('/<string:catagories.name>/items')
-def allItems():
+@app.route('/<int:catagory_id>/items')
+def allItems(catagories_id):
 	return "This page will show all items within a catagory"
 
 
-@app.route('/<string:catagories.name>/item/new')
-def newItem():
+@app.route('/<int:catagory_id>/item/new')
+def newItem(catagories_id):
 	return "This page will be for adding a new item to a catagory"
 
 
-@app.route('/<string:catagories.name>/<string:item_catagory.name>/edit')
-def editItem():
+@app.route('/<int:catagory_id>/<int:item_id>/edit')
+def editItem(catagories_id, item_id):
 	return "This page will be for editing an item in a catagory"
 
 
-@app.route('/<string:catagories.name>/<string:item_catagory.name>/delete')
-def editItem():
+@app.route('/<int:catagory_id>/<int:item_id>/delete')
+def deleteItem(catagories_id, item_id):
 	return "This page will be for deleting an item in a catagory"
 
 
