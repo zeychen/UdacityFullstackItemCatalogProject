@@ -13,6 +13,30 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
+@app.route('/')
+@app.route('/catagories')
+def allCatagories():
+	return "This page will show all my catagories"
+
+
+@app.route('/<string:catagories.name>/items')
+def allItems():
+	return "This page will show all items within a catagory"
+
+
+@app.route('/<string:catagories.name>/item/new')
+def newItem():
+	return "This page will be for adding a new item to a catagory"
+
+
+@app.route('/<string:catagories.name>/<string:item_catagory.name>/edit')
+def editItem():
+	return "This page will be for editing an item in a catagory"
+
+
+@app.route('/<string:catagories.name>/<string:item_catagory.name>/delete')
+def editItem():
+	return "This page will be for deleting an item in a catagory"
 
 
 
