@@ -14,30 +14,45 @@ session = DBSession()
 
 catagory_id = 2
 
+
+#Fake catagory
+catagory = {'name': 'The CRUDdy Crab', 'id': '1'}
+
+catagories = [{'name': 'The CRUDdy Crab', 'id': '1'}, {'name':'Blue Burgers', 'id':'2'},{'name':'Taco Hut', 'id':'3'}]
+
+
+#Fake catagory items
+items = [ {'name':'Cheese Pizza', 'description':'made with fresh cheese', 'id':'1'}, {'name':'Chocolate Cake','description':'made with Dutch Chocolate', 'id':'2'},{'name':'Caesar Salad', 'description':'with fresh organic vegetables','id':'3'},{'name':'Iced Tea', 'description':'with lemon','id':'4'},{'name':'Spinach Dip', 'description':'creamy dip with fresh spinach','id':'5'} ]
+item =  {'name':'Cheese Pizza','description':'made with fresh cheese'}
+
+
+
+
+
 @app.route('/')
 @app.route('/catagories/')
 def allCatagories():
-	return "This page will show all catagories"
+	return render_template('catagories.html', catagories = catagories)
 
 
 @app.route('/<string:catagory_name>/items')
 def allItems(catagory_name):
-	return "This page will show all items within a catagory"
+	return render_template('items.html', items = items)
 
 
 @app.route('/<string:catagory_name>/item/new')
 def newItem(catagory_name):
-	return "This page will be for adding a new item to a catagory"
+	return render_template('newitem.html')
 
 
 @app.route('/<string:catagory_name>/<string:item_name>/edit')
 def editItem(catagory_name, item_name):
-	return "This page will be for editing an item in a catagory"
+	return render_template('edititem.html')
 
 
 @app.route('/<string:catagory_name>/<string:item_name>/delete')
 def deleteItem(catagory_name, item_name):
-	return "This page will be for deleting an item in a catagory"
+	return render_template('deleteitem.html')
 
 
 
