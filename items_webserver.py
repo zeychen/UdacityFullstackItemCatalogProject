@@ -12,30 +12,31 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+catagory_id = 2
 
 @app.route('/')
-@app.route('/catagories')
+@app.route('/catagories/')
 def allCatagories():
 	return "This page will show all catagories"
 
 
-@app.route('/<int:catagory_id>/items')
-def allItems(catagories_id):
+@app.route('/<string:catagory_name>/items')
+def allItems(catagory_name):
 	return "This page will show all items within a catagory"
 
 
-@app.route('/<int:catagory_id>/item/new')
-def newItem(catagories_id):
+@app.route('/<string:catagory_name>/item/new')
+def newItem(catagory_name):
 	return "This page will be for adding a new item to a catagory"
 
 
-@app.route('/<int:catagory_id>/<int:item_id>/edit')
-def editItem(catagories_id, item_id):
+@app.route('/<string:catagory_name>/<string:item_name>/edit')
+def editItem(catagory_name, item_name):
 	return "This page will be for editing an item in a catagory"
 
 
-@app.route('/<int:catagory_id>/<int:item_id>/delete')
-def deleteItem(catagories_id, item_id):
+@app.route('/<string:catagory_name>/<string:item_name>/delete')
+def deleteItem(catagory_name, item_name):
 	return "This page will be for deleting an item in a catagory"
 
 
