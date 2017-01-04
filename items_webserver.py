@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 app = Flask(__name__)
 
 # import database functions
@@ -43,8 +43,6 @@ def allCategories():
 def allItems(category_id):
 	category = db_category(session, category_id)
 	items = db_items(session, category_id)
-	# items = session.query(Items).filter_by(category_id=category.id).order_by(Items.name).all()
-	# return "item = %s <br> category = %s" % (items, category)
 	return render_template('items.html', items = items, category = category)
 
 
@@ -83,15 +81,11 @@ def deleteItem(category_id, item_id):
 		item = db_item(session, item_id)
 		session.delete(item)
 		session.commit()
-		return redirect(url_for('allItems', category_id=category_id, item=item))
+		return redirect(url_for('allItems', category_id=category_id, item_id=item_id))
 	else:
 		item = db_item(session, item_id)
 		category = db_category(session, category_id)
-		return redirect(url_for('allItems', category_id=category_id, item=item))
-
-
-# 	return render_template('deleteitem.html', category = category, item = item)
-
+		return render_template('deleteItem.html', category = category, item = item, name=item.name, description=item.description)
 
 
 if __name__ == '__main__':
