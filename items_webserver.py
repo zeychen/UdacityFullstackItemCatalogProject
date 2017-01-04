@@ -14,29 +14,29 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-
-#Fake category
-# category = {'name': 'The CRUDdy Crab', 'id': '1'}
-
-# categories = [{'name': 'The CRUDdy Crab', 'id': '1'}, {'name':'Blue Burgers', 'id':'2'},{'name':'Taco Hut', 'id':'3'}]
-
-
-#Fake category items
-# items = [ {'name':'Cheese Pizza', 'description':'made with fresh cheese', 'id':'1'}, {'name':'Chocolate Cake','description':'made with Dutch Chocolate', 'id':'2'},{'name':'Caesar Salad', 'description':'with fresh organic vegetables','id':'3'},{'name':'Iced Tea', 'description':'with lemon','id':'4'},{'name':'Spinach Dip', 'description':'creamy dip with fresh spinach','id':'5'} ]
-# item =  {'name':'Cheese Pizza','description':'made with fresh cheese'}
-
-# @app.route('/test')
-# def test():
-# 	items = session.query(Items).all()
-# 	return render_template('categories.html', categories = items)
-
-
-
 @app.route('/')
 @app.route('/catalog/')
 def allCategories():
+	"""
+	list all categories
+	front page
+	"""
 	categories=db_categories(session)
 	return render_template('categories.html', categories = categories)
+
+
+@app.route('/catalog/newcategory', methods=['GET', 'POST'])
+def addCategory():
+	"""
+	add new category
+	"""
+	if request.method == 'POST':
+		newCat = Categories(name=request.form['name'])
+		session.add(newCat)
+		session.commit
+		return redirect(url_for('allCategories'))
+	else:
+		return render_template('newcat.html')
 
 
 @app.route('/<int:category_id>/items')
