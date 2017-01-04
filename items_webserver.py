@@ -29,6 +29,7 @@ def allCategories():
 def addCategory():
 	"""
 	add new category
+	requires name of category
 	"""
 	if request.method == 'POST':
 		if request.form['name']:
@@ -43,8 +44,27 @@ def addCategory():
 		return render_template('newcat.html')
 
 
+@app.route('/<int:category_id>/deletecategory', methods=['GET', 'POST'])
+def deleteCategory(category_id):
+	"""
+	delete category
+	"""
+	if request.method == 'POST':
+		category = db_category(session, category_id)
+		session.delete(category)
+		session.commit()
+		return redirect(url_for('allCategories'))
+	else:
+		category = db_category(session, category_id)
+		return render_template('deleteCategory.html', name=category.name)
+
+
 @app.route('/<int:category_id>/items')
 def allItems(category_id):
+	"""
+	list all categories
+	front page
+	"""
 	category = db_category(session, category_id)
 	items = db_items(session, category_id)
 	return render_template('items.html', items = items, category = category)
@@ -54,6 +74,7 @@ def allItems(category_id):
 def editItem(category_id, item_id):
 	"""
 	edit items within category
+	requires name and description
 	"""
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
@@ -77,6 +98,10 @@ def editItem(category_id, item_id):
 
 @app.route('/<int:category_id>/item/new', methods=['GET', 'POST'])
 def newItem(category_id):
+	"""
+	add items within category
+	requires name and description
+	"""
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
 			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
@@ -96,6 +121,9 @@ def newItem(category_id):
 
 @app.route('/<int:category_id>/<int:item_id>/delete', methods=['GET', 'POST'])
 def deleteItem(category_id, item_id):
+	"""
+	delete items within category
+	"""
 	if request.method == 'POST':
 		item = db_item(session, item_id)
 		session.delete(item)
