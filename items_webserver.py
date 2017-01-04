@@ -31,10 +31,14 @@ def addCategory():
 	add new category
 	"""
 	if request.method == 'POST':
-		newCat = Categories(name=request.form['name'])
-		session.add(newCat)
-		session.commit
-		return redirect(url_for('allCategories'))
+		if request.form['name']:
+			newCat = Categories(name=request.form['name'])
+			session.add(newCat)
+			session.commit
+			return redirect(url_for('allCategories'))
+		else:
+			error = "must enter name for category"
+			return render_template('newcat.html', error=error)
 	else:
 		return render_template('newcat.html')
 
@@ -52,11 +56,19 @@ def editItem(category_id, item_id):
 	edit items within category
 	"""
 	if request.method == 'POST':
-		item = db_item(session, item_id)
-		item.name = request.form['name']
-		item.description = request.form['description']
-		session.commit()
-		return redirect(url_for('allItems', category_id=category_id))
+		if request.form['name'] and request.form['description']:
+			item = db_item(session, item_id)
+			item.name = request.form['name']
+			item.description = request.form['description']
+			session.commit()
+			return redirect(url_for('allItems', category_id=category_id))
+		else:
+			name = request.form['name']
+			description = request.form['description']
+			category = db_category(session, category_id)
+			item = db_item(session, item_id)
+			error = "must enter name and description"
+			return render_template('edititem.html', category = category, item = item, name=name, description=description, error=error)
 	else:
 		category = db_category(session, category_id)
 		item = db_item(session, item_id)
@@ -66,10 +78,17 @@ def editItem(category_id, item_id):
 @app.route('/<int:category_id>/item/new', methods=['GET', 'POST'])
 def newItem(category_id):
 	if request.method == 'POST':
-		newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
-		session.add(newItem)
-		session.commit()
-		return redirect(url_for('allItems', category_id=category_id))
+		if request.form['name'] and request.form['description']:
+			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
+			session.add(newItem)
+			session.commit()
+			return redirect(url_for('allItems', category_id=category_id))
+		else:
+			name = request.form['name']
+			description = request.form['description']
+			category = db_category(session, category_id)
+			error = "must enter name and description"
+			return render_template('newitem.html', category = category, name=name, description=description, error=error)
 	else:
 		category = db_category(session, category_id)
 		return render_template('newitem.html', category = category)
