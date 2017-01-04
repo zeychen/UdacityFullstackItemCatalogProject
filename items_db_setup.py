@@ -21,9 +21,9 @@ Example mapper attributes:
 """
 
 
-class Catagories(Base):
+class Categories(Base):
 
-	__tablename__ = 'catagories'
+	__tablename__ = 'category'
 
 	name = Column(String(80), nullable=False)
 	id = Column(Integer, primary_key=True)
@@ -31,17 +31,17 @@ class Catagories(Base):
 
 class Items(Base):
 
-	__tablename__ = 'item_catagory'
+	__tablename__ = 'item'
 
 	name = Column(String(80), nullable=False)
 	id = Column(Integer, primary_key=True)
 	description = Column(String(250))
-	catagory_id = Column(Integer, ForeignKey('catagories.id'))
-	catagory = relationship(Catagories)
+	category_id = Column(Integer, ForeignKey('category.id'))
+	category = relationship('Categories')
 
 
 ############ Ending Configuration ###############
-engine = create_engine('sqlite:///catagories.db')
+engine = create_engine('sqlite:///categories.db')
 
 # adds data as new tables in db
 Base.metadata.create_all(engine)

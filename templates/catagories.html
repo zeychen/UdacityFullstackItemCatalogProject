@@ -1,7 +1,0 @@
-{% extends "base.html" %}
-{% block content %}
-{% for i in catagories %}
-<h2><a href="{{ url_for('allItems', catagory_name = i.name) }}">{{i.name}}</a></h2>
-<br>
-{% endfor %}
-{% endblock %}

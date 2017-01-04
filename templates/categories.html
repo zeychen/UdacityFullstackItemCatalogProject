@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+{% for i in categories %}
+<h2><a href="{{ url_for('allItems', category_id = i.id) }}">{{i.name}}</a></h2>
+<br>
+
+{% endfor %}
+
+
+
+
+
+{% endblock %}
