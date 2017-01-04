@@ -7,6 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from items_db_setup import Base, Categories, Items
 from items_db_query import db_categories, db_items, db_category, db_item
 
+# import user auth functions
+from flask import session as login_session
+import random, string
+
+
 # Create session and connect to DB
 engine = create_engine('sqlite:///categories.db')
 Base.metadata.bind = engine
