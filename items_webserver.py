@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 app = Flask(__name__)
 
 # import database functions
@@ -48,18 +48,56 @@ def allItems(category_id):
 	return render_template('items.html', items = items, category = category)
 
 
-@app.route('/<int:category_id>/<int:item_id>/edit')
+@app.route('/<int:category_id>/<int:item_id>/edit', methods=['GET', 'POST'])
 def editItem(category_id, item_id):
-	category = db_category(session, category_id)
-	item = db_item(session, item_id)
-	# return "item = %s <br> category = %s" % (item, category)
-	return render_template('edititem.html', category = category, item = item)
+	"""
+	edit items within category
+	"""
+	if request.method == 'POST':
+		newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
+		# newItem.name = request.form['name']
+		# newItem.description = request.form['description']
+		# newItem.category_id = category_id
+		# result = request.form['description']
+		session.add(newItem)
+		session.commit()
+		return redirect(url_for('allItems', category_id=category_id))
+		# if request.form['name'] and request.form['description']:
+		# 	# if name and description are entered
+		# 	newItem = Items()
+		# 	newItem.name = request.form['name']
+		# 	newItem.description = request.form['description']
+		# 	newItem.category_id = category_id
+		# 	session.add(newItem)
+		# 	session.commit()
+		# 	return redirect(url_for('allItems', category_id=category_id))
+		# else:
+		# 	error = "need both name and description"
+		# 	return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
+	else:
+		category = db_category(session, category_id)
+		item = db_item(session, item_id)
+		return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
 
 
-@app.route('/<int:category_id>/item/new')
+
+
+	# category = db_category(session, category_id)
+	# item = db_item(session, item_id)
+	# # return "item = %s <br> category = %s" % (item, category)
+	# return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
+
+
+@app.route('/<int:category_id>/item/new', methods=['GET', 'POST'])
 def newItem(category_id):
-	category = db_category(session, category_id)
-	return render_template('newitem.html', category = category)
+	if request.method == 'POST':
+		newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
+		session.add(newItem)
+		session.commit()
+		return redirect(url_for('allItems', category_id=category_id))
+	else:
+		category = db_category(session, category_id)
+		return render_template('newitem.html', category = category)
 
 
 # @app.route('/<int:category_id>/<int:item_id>/delete')

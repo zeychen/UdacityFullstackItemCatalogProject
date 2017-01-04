@@ -42,3 +42,4 @@ def db_item(db_session, item_id):
 	item = db_session.query(Items).filter_by(id=item_id).one()
 	return item
 
+
