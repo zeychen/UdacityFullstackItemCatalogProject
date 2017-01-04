@@ -54,38 +54,15 @@ def editItem(category_id, item_id):
 	edit items within category
 	"""
 	if request.method == 'POST':
-		newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
-		# newItem.name = request.form['name']
-		# newItem.description = request.form['description']
-		# newItem.category_id = category_id
-		# result = request.form['description']
-		session.add(newItem)
+		item = db_item(session, item_id)
+		item.name = request.form['name']
+		item.description = request.form['description']
 		session.commit()
 		return redirect(url_for('allItems', category_id=category_id))
-		# if request.form['name'] and request.form['description']:
-		# 	# if name and description are entered
-		# 	newItem = Items()
-		# 	newItem.name = request.form['name']
-		# 	newItem.description = request.form['description']
-		# 	newItem.category_id = category_id
-		# 	session.add(newItem)
-		# 	session.commit()
-		# 	return redirect(url_for('allItems', category_id=category_id))
-		# else:
-		# 	error = "need both name and description"
-		# 	return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
 	else:
 		category = db_category(session, category_id)
 		item = db_item(session, item_id)
 		return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
-
-
-
-
-	# category = db_category(session, category_id)
-	# item = db_item(session, item_id)
-	# # return "item = %s <br> category = %s" % (item, category)
-	# return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
 
 
 @app.route('/<int:category_id>/item/new', methods=['GET', 'POST'])
@@ -100,8 +77,19 @@ def newItem(category_id):
 		return render_template('newitem.html', category = category)
 
 
-# @app.route('/<int:category_id>/<int:item_id>/delete')
-# def deleteItem(category_name, item_name):
+@app.route('/<int:category_id>/<int:item_id>/delete', methods=['GET', 'POST'])
+def deleteItem(category_id, item_id):
+	if request.method == 'POST':
+		item = db_item(session, item_id)
+		session.delete(item)
+		session.commit()
+		return redirect(url_for('allItems', category_id=category_id, item=item))
+	else:
+		item = db_item(session, item_id)
+		category = db_category(session, category_id)
+		return redirect(url_for('allItems', category_id=category_id, item=item))
+
+
 # 	return render_template('deleteitem.html', category = category, item = item)
 
 
