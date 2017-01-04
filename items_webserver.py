@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect
 from flask import url_for, flash, jsonify
-app = Flask(__name__)
+
 
 # import database functions
 from sqlalchemy import create_engine
@@ -13,12 +13,141 @@ from flask import session as login_session
 import random, string
 
 
+# set up server for gconnect
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import FlowExchangeError
+import httplib2
+import json
+from flask import make_response
+import requests
+
+app = Flask(__name__)
+
+CLIENT_ID = json.loads(
+	open('client_secrets.json', 'r').read())['web']['client_id']
+
 
 # Create session and connect to DB
 engine = create_engine('sqlite:///categories.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+
+# Create anti-forgery state token
+
+
+@app.route('/login')
+def showLogin():
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
+    login_session['state'] = state
+    # return "The current session state is %s" % login_session['state']
+    return render_template('login.html', state=state)
+
+
+# G+ authentication
+
+
+@app.route('/gconnect', methods=['POST'])
+def gconnect():
+    # Validate state token
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 400)
+        return response
+    # Obtain authorization code
+    code = request.data
+
+    try:
+        # Upgrade the authorization code into a credentials object
+        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
+        oauth_flow.redirect_uri = 'postmessage'
+        credentials = oauth_flow.step2_exchange(code)
+    except FlowExchangeError:
+        response = make_response(
+            json.dumps('Failed to upgrade the authorization code.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Check that the access token is valid.
+    access_token = credentials.access_token
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
+           % access_token)
+    h = httplib2.Http()
+    result = json.loads(h.request(url, 'GET')[1])
+    # If there was an error in the access token info, abort.
+    if result.get('error') is not None:
+        response = make_response(json.dumps(result.get('error')), 500)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Verify that the access token is used for the intended user.
+    gplus_id = credentials.id_token['sub']
+    if result['user_id'] != gplus_id:
+        response = make_response(
+            json.dumps("Token's user ID doesn't match given user ID."), 411)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Verify that the access token is valid for this app.
+    if result['issued_to'] != CLIENT_ID:
+        response = make_response(
+            json.dumps("Token's client ID does not match app's."), 412)
+        print "Token's client ID does not match app's."
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    stored_credentials = login_session.get('credentials')
+    stored_gplus_id = login_session.get('gplus_id')
+    if stored_credentials is not None and gplus_id == stored_gplus_id:
+        response = make_response(json.dumps('Current user is already connected.'),
+                                 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+
+    # Store the access token in the session for later use.
+    login_session['credentials'] = credentials
+    login_session['gplus_id'] = gplus_id
+
+    # Get user info
+    userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
+    params = {'access_token': credentials.access_token, 'alt': 'json'}
+    answer = requests.get(userinfo_url, params=params)
+
+    data = answer.json()
+
+    login_session['username'] = data['name']
+    login_session['picture'] = data['picture']
+    login_session['email'] = data['email']
+
+    flash("you are now logged in as %s" % login_session['username'])
+    return
+
+
+# JSON APIs for category and item info
+
+
+@app.route('/catalog/JSON')
+def allCategoriesJSON():
+	"""
+	list all categories in JSON format
+	"""
+	categories=db_categories(session)
+	return jsonify(Categories=[i.serialize for i in categories])
+
+
+@app.route('/<int:category_id>/items/JSON')
+def allItemsJSON(category_id):
+	"""
+	list all items in JSON format
+	"""
+	category = db_category(session, category_id)
+	items = db_items(session, category_id)
+	return jsonify(Items=[i.serialize for i in items])
+
+
+# routing functions
 
 
 @app.route('/')
@@ -30,14 +159,6 @@ def allCategories():
 	"""
 	categories=db_categories(session)
 	return render_template('categories.html', categories = categories)
-
-@app.route('/catalog/JSON')
-def allCategoriesJSON():
-	"""
-	list all categories in JSON format
-	"""
-	categories=db_categories(session)
-	return jsonify(Categories=[i.serialize for i in categories])
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -84,15 +205,6 @@ def allItems(category_id):
 	items = db_items(session, category_id)
 	return render_template('items.html', items = items, category = category)
 
-
-@app.route('/<int:category_id>/items/JSON')
-def allItemsJSON(category_id):
-	"""
-	list all items in JSON format
-	"""
-	category = db_category(session, category_id)
-	items = db_items(session, category_id)
-	return jsonify(Items=[i.serialize for i in items])
 
 
 @app.route('/<int:category_id>/<int:item_id>/edit', methods=['GET', 'POST'])
