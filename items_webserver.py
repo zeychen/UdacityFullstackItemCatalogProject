@@ -37,22 +37,22 @@ def allCatagories():
 
 @app.route('/<string:catagory_name>/items')
 def allItems(catagory_name):
-	return render_template('items.html', items = items)
+	return render_template('items.html', items = items, catagory = catagory)
 
 
 @app.route('/<string:catagory_name>/item/new')
 def newItem(catagory_name):
-	return render_template('newitem.html')
+	return render_template('newitem.html', catagory = catagory)
 
 
 @app.route('/<string:catagory_name>/<string:item_name>/edit')
 def editItem(catagory_name, item_name):
-	return render_template('edititem.html')
+	return render_template('edititem.html', catagory = catagory, item = item)
 
 
 @app.route('/<string:catagory_name>/<string:item_name>/delete')
 def deleteItem(catagory_name, item_name):
-	return render_template('deleteitem.html')
+	return render_template('deleteitem.html', catagory = catagory, item = item)
 
 
 
