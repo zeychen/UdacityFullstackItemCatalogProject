@@ -28,6 +28,16 @@ class Categories(Base):
 	name = Column(String(80), nullable=False)
 	id = Column(Integer, primary_key=True)
 
+	@property
+	def serialize(self):
+		"""
+		returns object in serialized format
+		"""
+		return {
+			'name': self.name,
+			'id': self.id,
+		}
+	
 
 class Items(Base):
 

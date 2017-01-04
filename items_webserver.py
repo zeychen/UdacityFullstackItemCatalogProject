@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect
+from flask import url_for, flash, jsonify
 app = Flask(__name__)
 
 # import database functions
@@ -10,6 +11,7 @@ from items_db_query import db_categories, db_items, db_category, db_item
 # import user auth functions
 from flask import session as login_session
 import random, string
+
 
 
 # Create session and connect to DB
@@ -28,6 +30,14 @@ def allCategories():
 	"""
 	categories=db_categories(session)
 	return render_template('categories.html', categories = categories)
+
+@app.route('/catalog/JSON')
+def allCategoriesJSON():
+	"""
+	list all categories in JSON format
+	"""
+	categories=db_categories(session)
+	return jsonify(Categories=[i.serialize for i in categories])
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -73,6 +83,16 @@ def allItems(category_id):
 	category = db_category(session, category_id)
 	items = db_items(session, category_id)
 	return render_template('items.html', items = items, category = category)
+
+
+@app.route('/<int:category_id>/items/JSON')
+def allItemsJSON(category_id):
+	"""
+	list all items in JSON format
+	"""
+	category = db_category(session, category_id)
+	items = db_items(session, category_id)
+	return jsonify(Items=[i.serialize for i in items])
 
 
 @app.route('/<int:category_id>/<int:item_id>/edit', methods=['GET', 'POST'])
