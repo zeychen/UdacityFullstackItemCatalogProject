@@ -11,6 +11,14 @@ session = DBSession()
 
 # categories and items for testing purposes
 
+# user1 = Users(name="zeechen")
+# session.add(user1)
+# session.commit()
+
+# user2 = Users(name="chen")
+# session.add(user2)
+# session.commit()
+
 category1 = Categories(name = "sports")
 session.add(category1)
 session.commit()
