@@ -122,6 +122,12 @@ def gconnect():
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
+    # create user id using email if no user id
+    user_id = getUserID(login_session['email'])
+    if not user_id:
+    	user_id = createUser(login_session)
+    login_session['user_id'] = user_id
+
     output = ''
     output += '<h1>Welcome, '
     output += login_session['username']
@@ -166,6 +172,33 @@ def gdisconnect():
     	response = make_response(json.dumps('Failed to revoke token for given user.', 400))
     	response.headers['Content-Type'] = 'application/json'
     	return response
+
+
+"""
+User Authorization
+"""
+
+
+def createUser(login_session):
+    newUser = User(name=login_session['username'], email=login_session[
+                   'email'], picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
+
+
+def getUserInfo(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
 
 
 """
@@ -218,7 +251,7 @@ def addCategory():
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name']:
-			newCat = Categories(name=request.form['name'])
+			newCat = Categories(name=request.form['name'], user_id=login_session['user_id'])
 			session.add(newCat)
 			session.commit
 			return redirect(url_for('allCategories'))
@@ -296,7 +329,7 @@ def newItem(category_id):
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
-			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
+			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id, user_id=login_session['user_id'])
 			session.add(newItem)
 			session.commit()
 			return redirect(url_for('allItems', category_id=category_id))

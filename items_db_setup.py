@@ -20,21 +20,23 @@ Example mapper attributes:
 	ForeignKey('some_table.id')
 """
 
-# class Users(Base):
-# 	__tablename__ = 'user'
+class User(Base):
+	__tablename__ = 'user'
 
-# 	id = Column(String(80), primary_key = True)
-# 	name = Column(String(80), nullable=False)
+	id = Column(String(80), primary_key = True)
+	name = Column(String(80), nullable=False)
+	email = Column(String(250), nullable=False)
+	picture = Column(String(250))
 
-# 	@property
-# 	def serialize(self):
-# 		"""
-# 		returns object in serialized format
-# 		"""
-# 		return {
-# 			'id': self.id,
-# 			'name': self.name
-# 		}
+	@property
+	def serialize(self):
+		"""
+		returns object in serialized format
+		"""
+		return {
+			'id': self.id,
+			'name': self.name
+		}
 
 class Categories(Base):
 
@@ -43,8 +45,8 @@ class Categories(Base):
 	id = Column(Integer, primary_key=True)
 	name = Column(String(80), nullable=False)
 
-	# user_id = Column(Integer, ForeignKey('user.id'))
-	# user = relationship(Users)
+	user_id = Column(Integer, ForeignKey('user.id'))
+	user = relationship(Users)
 
 	@property
 	def serialize(self):
@@ -69,8 +71,8 @@ class Items(Base):
 	category_id = Column(Integer, ForeignKey('category.id'))
 	category = relationship(Categories)
 
-	# user_id = Column(Integer, ForeignKey('user.id'))
-	# user = relationship(Users)
+	user_id = Column(Integer, ForeignKey('user.id'))
+	user = relationship(Users)
 
 	@property
 	def serialize(self):
