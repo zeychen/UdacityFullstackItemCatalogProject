@@ -201,6 +201,16 @@ def getUserID(email):
         return None
 
 
+def loggedIn(login_session):
+	"""
+	check if user is logged in
+	"""
+	gplus_id = credentials.id_token['sub']
+	stored_credentials = login_session.get('credentials')
+	stored_gplus_id = login_session.get('gplus_id')
+	return stored_access_token is not None and gplus_id == stored_gplus_id
+
+
 """
 JSON APIs
 """
