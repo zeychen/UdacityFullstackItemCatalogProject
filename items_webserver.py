@@ -214,6 +214,8 @@ def addCategory():
 	add new category
 	requires name of category
 	"""
+	if 'username' not in login_session:
+		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name']:
 			newCat = Categories(name=request.form['name'])
@@ -232,6 +234,8 @@ def deleteCategory(category_id):
 	"""
 	delete category
 	"""
+	if 'username' not in login_session:
+		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		category = db_category(session, category_id)
 		session.delete(category)
@@ -260,6 +264,8 @@ def editItem(category_id, item_id):
 	edit items within category
 	requires name and description
 	"""
+	if 'username' not in login_session:
+		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
 			item = db_item(session, item_id)
@@ -286,6 +292,8 @@ def newItem(category_id):
 	add items within category
 	requires name and description
 	"""
+	if 'username' not in login_session:
+		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
 			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id)
@@ -308,6 +316,8 @@ def deleteItem(category_id, item_id):
 	"""
 	delete items within category
 	"""
+	if 'username' not in login_session:
+		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		item = db_item(session, item_id)
 		session.delete(item)
