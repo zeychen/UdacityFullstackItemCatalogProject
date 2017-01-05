@@ -5,7 +5,7 @@ from flask import url_for, flash, jsonify
 # import database functions
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from items_db_setup import Base, Categories, Items
+from items_db_setup import Base, Categories, Items, User
 from items_db_query import db_categories, db_items, db_category, db_item
 
 # import user auth functions
@@ -108,6 +108,7 @@ def gconnect():
         return response
 
     # Store the access token in the session for later use.
+    login_session['credentials'] = credentials
     login_session['access_token'] = credentials.access_token
     login_session['gplus_id'] = gplus_id
 
@@ -205,10 +206,10 @@ def loggedIn(login_session):
 	"""
 	check if user is logged in
 	"""
-	gplus_id = credentials.id_token['sub']
+	gplus_id = login_session['credentials'].id_token['sub']
 	stored_credentials = login_session.get('credentials')
 	stored_gplus_id = login_session.get('gplus_id')
-	return stored_access_token is not None and gplus_id == stored_gplus_id
+	return stored_credentials is not None and gplus_id == stored_gplus_id
 
 
 """
@@ -297,7 +298,7 @@ def allItems(category_id):
 	"""
 	category = db_category(session, category_id)
 	items = db_items(session, category_id)
-	return render_template('items.html', items = items, category = category)
+	return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session))
 
 
 
