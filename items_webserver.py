@@ -5,7 +5,7 @@ from flask import url_for, flash, jsonify
 # import database functions
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from items_db_setup import Base, Categories, Items, User
+from items_db_setup import Base, Categories, Items
 from items_db_query import db_categories, db_items, db_category, db_item
 
 # import user auth functions
@@ -31,7 +31,7 @@ CLIENT_ID = json.loads(
 engine = create_engine('sqlite:///categories.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
-session = DBSession()
+db_session = DBSession()
 
 """
 User Authentication
@@ -108,7 +108,6 @@ def gconnect():
         return response
 
     # Store the access token in the session for later use.
-    login_session['credentials'] = credentials
     login_session['access_token'] = credentials.access_token
     login_session['gplus_id'] = gplus_id
 
@@ -123,12 +122,6 @@ def gconnect():
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
-    # create user id using email if no user id
-    user_id = getUserID(login_session['email'])
-    if not user_id:
-    	user_id = createUser(login_session)
-    login_session['user_id'] = user_id
-
     output = ''
     output += '<h1>Welcome, '
     output += login_session['username']
@@ -137,6 +130,12 @@ def gconnect():
     output += login_session['picture']
     output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
+
+    print "%s" % login_session['access_token']
+    print "%s" % login_session['gplus_id']
+    print "%s" % login_session['username']
+    print "%s" % login_session['email']
+
     print "done!"
     return output
 
@@ -145,34 +144,36 @@ def gconnect():
 
 @app.route('/gdisconnect')
 def gdisconnect():
-    access_token = login_session['access_token']
-    print 'In gdisconnect access token is %s', access_token
-    print 'User name is: ' 
-    print login_session['username']
-    if access_token is None:
- 	print 'Access Token is None'
-    	response = make_response(json.dumps('Current user not connected.'), 401)
-    	response.headers['Content-Type'] = 'application/json'
-    	return response
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
-    h = httplib2.Http()
-    result = h.request(url, 'GET')[0]
-    print 'result is '
-    print result
-    if result['status'] == '200':
-	del login_session['access_token'] 
-    	del login_session['gplus_id']
-    	del login_session['username']
-    	del login_session['email']
-    	del login_session['picture']
-    	response = make_response(json.dumps('Successfully disconnected.'), 200)
-    	response.headers['Content-Type'] = 'application/json'
-    	return response
-    else:
-	
-    	response = make_response(json.dumps('Failed to revoke token for given user.', 400))
-    	response.headers['Content-Type'] = 'application/json'
-    	return response
+	print login_session['username']
+	credentials = login_session
+
+	if credentials is None:
+		print 'Credentials is None'
+		response = make_response(json.dumps('Current user not connected.'), 401)
+		response.headers['Content-Type'] = 'application/json'
+		return response
+
+	# access_token = credentials.access_token
+	print 'In gdisconnect access token is %s', login_session['username']
+	url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+	h = httplib2.Http()
+	result = h.request(url, 'GET')[0]
+	print 'result is '
+	print result
+
+	if result['status'] == '200':
+		del login_session['access_token'] 
+		del login_session['gplus_id']
+		del login_session['username']
+		del login_session['email']
+		del login_session['picture']
+		response = make_response(json.dumps('Successfully disconnected.'), 200)
+		response.headers['Content-Type'] = 'application/json'
+		return response
+	else:
+		response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+		response.headers['Content-Type'] = 'application/json'
+		return response
 
 
 """
@@ -180,36 +181,34 @@ User Authorization
 """
 
 
-def createUser(login_session):
-    newUser = User(name=login_session['username'], email=login_session[
-                   'email'], picture=login_session['picture'])
-    session.add(newUser)
-    session.commit()
-    user = session.query(User).filter_by(email=login_session['email']).one()
-    return user.id
+# def createUser(login_session):
+#     newUser = User(name=login_session['username'], email=login_session[
+#                    'email'], picture=login_session['picture'])
+#     db_session.add(newUser)
+#     db_session.commit()
+#     user = session.query(User).filter_by(email=login_session['email']).one()
+#     return user.id
 
 
-def getUserInfo(user_id):
-    user = session.query(User).filter_by(id=user_id).one()
-    return user
+# def getUserInfo(user_id):
+#     user = db_session.query(User).filter_by(id=user_id).one()
+#     return user
 
 
-def getUserID(email):
-    try:
-        user = session.query(User).filter_by(email=email).one()
-        return user.id
-    except:
-        return None
+# def getUserID(email):
+#     try:
+#         user = db_session.query(User).filter_by(email=email).one()
+#         return user.id
+#     except:
+#         return None
 
 
 def loggedIn(login_session):
 	"""
 	check if user is logged in
 	"""
-	gplus_id = login_session['credentials'].id_token['sub']
-	stored_credentials = login_session.get('credentials')
-	stored_gplus_id = login_session.get('gplus_id')
-	return stored_credentials is not None and gplus_id == stored_gplus_id
+	return login_session is not None 
+
 
 
 """
@@ -222,7 +221,7 @@ def allCategoriesJSON():
 	"""
 	list all categories in JSON format
 	"""
-	categories=db_categories(session)
+	categories=db_categories(db_session)
 	return jsonify(Categories=[i.serialize for i in categories])
 
 
@@ -231,8 +230,8 @@ def allItemsJSON(category_id):
 	"""
 	list all items in JSON format
 	"""
-	category = db_category(session, category_id)
-	items = db_items(session, category_id)
+	category = db_category(db_session, category_id)
+	items = db_items(db_session, category_id)
 	return jsonify(Items=[i.serialize for i in items])
 
 
@@ -248,8 +247,8 @@ def allCategories():
 	list all categories
 	front page
 	"""
-	categories=db_categories(session)
-	return render_template('categories.html', categories = categories)
+	categories=db_categories(db_session)
+	return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session))
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -258,13 +257,16 @@ def addCategory():
 	add new category
 	requires name of category
 	"""
+
+	print login_session['username']
+
 	if 'username' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name']:
 			newCat = Categories(name=request.form['name'], user_id=login_session['user_id'])
-			session.add(newCat)
-			session.commit
+			db_session.add(newCat)
+			db_session.commit
 			return redirect(url_for('allCategories'))
 		else:
 			error = "must enter name for category"
@@ -282,11 +284,11 @@ def deleteCategory(category_id):
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		category = db_category(session, category_id)
-		session.delete(category)
-		session.commit()
+		db_session.delete(category)
+		db_session.commit()
 		return redirect(url_for('allCategories'))
 	else:
-		category = db_category(session, category_id)
+		category = db_category(db_session, category_id)
 		return render_template('deleteCategory.html', name=category.name)
 
 
@@ -296,8 +298,8 @@ def allItems(category_id):
 	list all categories
 	front page
 	"""
-	category = db_category(session, category_id)
-	items = db_items(session, category_id)
+	category = db_category(db_session, category_id)
+	items = db_items(db_session, category_id)
 	return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session))
 
 
@@ -312,21 +314,21 @@ def editItem(category_id, item_id):
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
-			item = db_item(session, item_id)
+			item = db_item(db_session, item_id)
 			item.name = request.form['name']
 			item.description = request.form['description']
-			session.commit()
+			db_session.commit()
 			return redirect(url_for('allItems', category_id=category_id))
 		else:
 			name = request.form['name']
 			description = request.form['description']
-			category = db_category(session, category_id)
-			item = db_item(session, item_id)
+			category = db_category(db_session, category_id)
+			item = db_item(db_session, item_id)
 			error = "must enter name and description"
 			return render_template('edititem.html', category = category, item = item, name=name, description=description, error=error)
 	else:
-		category = db_category(session, category_id)
-		item = db_item(session, item_id)
+		category = db_category(db_session, category_id)
+		item = db_item(db_session, item_id)
 		return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
 
 
@@ -341,17 +343,17 @@ def newItem(category_id):
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
 			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id, user_id=login_session['user_id'])
-			session.add(newItem)
-			session.commit()
+			db_session.add(newItem)
+			db_session.commit()
 			return redirect(url_for('allItems', category_id=category_id))
 		else:
 			name = request.form['name']
 			description = request.form['description']
-			category = db_category(session, category_id)
+			category = db_category(db_session, category_id)
 			error = "must enter name and description"
 			return render_template('newitem.html', category = category, name=name, description=description, error=error)
 	else:
-		category = db_category(session, category_id)
+		category = db_category(db_session, category_id)
 		return render_template('newitem.html', category = category)
 
 
@@ -363,17 +365,17 @@ def deleteItem(category_id, item_id):
 	if 'username' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
-		item = db_item(session, item_id)
-		session.delete(item)
-		session.commit()
+		item = db_item(db_session, item_id)
+		db_session.delete(item)
+		db_session.commit()
 		return redirect(url_for('allItems', category_id=category_id, item_id=item_id))
 	else:
-		item = db_item(session, item_id)
-		category = db_category(session, category_id)
+		item = db_item(db_session, item_id)
+		category = db_category(db_session, category_id)
 		return render_template('deleteItem.html', category = category, item = item, name=item.name, description=item.description)
 
 
 if __name__ == '__main__':
-	app.secret_key = "super-secret-key"
+	app.secret_key = "xAZ8YHkG5rV6F3Wix4QG7plI"
 	app.debug = True
 	app.run(host = '0.0.0.0', port = 5000)

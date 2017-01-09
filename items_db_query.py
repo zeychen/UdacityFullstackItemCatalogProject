@@ -43,14 +43,14 @@ def db_item(db_session, item_id):
 	return item
 
 
-def db_add_user(db_session, login_session):
-	"""
-	Insert user into database if new
-	"""
-	user_id = login_session['id']
-	user = db_session.query(Users).filter_by(id=user_id).all()
-	if not user:
-		user = User()
-		user.id = user_id
-		db_session.add(user)
-		db_session.commit()
+# def db_add_user(db_session, login_session):
+# 	"""
+# 	Insert user into database if new
+# 	"""
+# 	user_id = login_session['id']
+# 	user = db_session.query(Users).filter_by(id=user_id).all()
+# 	if not user:
+# 		user = User()
+# 		user.id = user_id
+# 		db_session.add(user)
+# 		db_session.commit()
