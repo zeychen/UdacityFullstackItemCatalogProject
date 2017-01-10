@@ -5,7 +5,7 @@ from flask import url_for, flash, jsonify
 # import database functions
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from items_db_setup import Base, Categories, Items
+from items_db_setup import Base, Categories, Items, User
 from items_db_query import db_categories, db_items, db_category, db_item
 
 # import user auth functions
@@ -111,6 +111,8 @@ def gconnect():
     login_session['access_token'] = credentials.access_token
     login_session['gplus_id'] = gplus_id
 
+    print "login-access token is = %s" % login_session['access_token']
+
     # Get user info
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
     params = {'access_token': credentials.access_token, 'alt': 'json'}
@@ -121,6 +123,12 @@ def gconnect():
     login_session['username'] = data['name']
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
+
+    user_id = getUserID(login_session['email'])
+    if not user_id:
+    	user_id = createUser(login_session)
+
+    login_session['user_id'] = user_id
 
     output = ''
     output += '<h1>Welcome, '
@@ -144,7 +152,7 @@ def gconnect():
 
 @app.route('/gdisconnect')
 def gdisconnect():
-	print login_session['username']
+	# print login_session['username']
 	credentials = login_session
 
 	if credentials is None:
@@ -154,7 +162,7 @@ def gdisconnect():
 		return response
 
 	# access_token = credentials.access_token
-	print 'In gdisconnect access token is %s', login_session['username']
+	print 'In gdisconnect access token is %s', login_session['access_token']
 	url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
 	h = httplib2.Http()
 	result = h.request(url, 'GET')[0]
@@ -181,33 +189,40 @@ User Authorization
 """
 
 
-# def createUser(login_session):
-#     newUser = User(name=login_session['username'], email=login_session[
-#                    'email'], picture=login_session['picture'])
-#     db_session.add(newUser)
-#     db_session.commit()
-#     user = session.query(User).filter_by(email=login_session['email']).one()
-#     return user.id
+def createUser(login_session):
+    newUser = User(name=login_session['username'], email=login_session[
+                   'email'])
+    db_session.add(newUser)
+    db_session.commit()
+    user = db_session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
 
 
-# def getUserInfo(user_id):
-#     user = db_session.query(User).filter_by(id=user_id).one()
-#     return user
+def getUserInfo(user_id):
+    user = db_session.query(User).filter_by(id=user_id).one()
+    return user
 
 
-# def getUserID(email):
-#     try:
-#         user = db_session.query(User).filter_by(email=email).one()
-#         return user.id
-#     except:
-#         return None
+def getUserID(email):
+    try:
+        user = db_session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
 
 
 def loggedIn(login_session):
 	"""
 	check if user is logged in
 	"""
-	return login_session is not None 
+	return login_session['user_id'] is not None 
+
+
+def owner(login_session, user_id):
+	"""
+	check if user is logged in
+	"""
+	return login_session['user_id'] == user_id
 
 
 
@@ -248,7 +263,7 @@ def allCategories():
 	front page
 	"""
 	categories=db_categories(db_session)
-	return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session))
+	return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['user_id'])
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -258,21 +273,19 @@ def addCategory():
 	requires name of category
 	"""
 
-	print login_session['username']
-
-	if 'username' not in login_session:
+	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name']:
-			newCat = Categories(name=request.form['name'], user_id=login_session['user_id'])
+			newCat = Categories(name=request.form['name'], user_id=getUserID(login_session['email']))
 			db_session.add(newCat)
 			db_session.commit
-			return redirect(url_for('allCategories'))
+			return redirect(url_for('allCategories', user=login_session['user_id']))
 		else:
 			error = "must enter name for category"
-			return render_template('newcat.html', error=error)
+			return render_template('newcat.html', error=error, user=login_session['user_id'])
 	else:
-		return render_template('newcat.html')
+		return render_template('newcat.html', user=login_session['user_id'])
 
 
 @app.route('/<int:category_id>/deletecategory', methods=['GET', 'POST'])
@@ -280,7 +293,7 @@ def deleteCategory(category_id):
 	"""
 	delete category
 	"""
-	if 'username' not in login_session:
+	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		category = db_category(session, category_id)
@@ -289,7 +302,7 @@ def deleteCategory(category_id):
 		return redirect(url_for('allCategories'))
 	else:
 		category = db_category(db_session, category_id)
-		return render_template('deleteCategory.html', name=category.name)
+		return render_template('deleteCategory.html', name=category.name, user=login_session['user_id'])
 
 
 @app.route('/<int:category_id>/items')
@@ -300,7 +313,7 @@ def allItems(category_id):
 	"""
 	category = db_category(db_session, category_id)
 	items = db_items(db_session, category_id)
-	return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session))
+	return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session), user=login_session['user_id'])
 
 
 
@@ -310,26 +323,27 @@ def editItem(category_id, item_id):
 	edit items within category
 	requires name and description
 	"""
-	if 'username' not in login_session:
+	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
+		item = db_item(db_session, item_id)
 		if request.form['name'] and request.form['description']:
 			item = db_item(db_session, item_id)
 			item.name = request.form['name']
 			item.description = request.form['description']
 			db_session.commit()
-			return redirect(url_for('allItems', category_id=category_id))
+			return redirect(url_for('allItems', category_id=category_id, user=login_session['user_id']))
 		else:
 			name = request.form['name']
 			description = request.form['description']
 			category = db_category(db_session, category_id)
 			item = db_item(db_session, item_id)
 			error = "must enter name and description"
-			return render_template('edititem.html', category = category, item = item, name=name, description=description, error=error)
+			return render_template('edititem.html', category = category, item = item, name=name, description=description, error=error, user=login_session['user_id'])
 	else:
 		category = db_category(db_session, category_id)
 		item = db_item(db_session, item_id)
-		return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description)
+		return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description, user=login_session['user_id'])
 
 
 @app.route('/<int:category_id>/item/new', methods=['GET', 'POST'])
@@ -338,23 +352,23 @@ def newItem(category_id):
 	add items within category
 	requires name and description
 	"""
-	if 'username' not in login_session:
+	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
-			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id, user_id=login_session['user_id'])
+			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id, user_id=getUserID(login_session['email']))
 			db_session.add(newItem)
 			db_session.commit()
-			return redirect(url_for('allItems', category_id=category_id))
+			return redirect(url_for('allItems', category_id=category_id, user=login_session['user_id']))
 		else:
 			name = request.form['name']
 			description = request.form['description']
 			category = db_category(db_session, category_id)
 			error = "must enter name and description"
-			return render_template('newitem.html', category = category, name=name, description=description, error=error)
+			return render_template('newitem.html', category = category, name=name, description=description, error=error, user=login_session['user_id'])
 	else:
 		category = db_category(db_session, category_id)
-		return render_template('newitem.html', category = category)
+		return render_template('newitem.html', category = category, user=login_session['user_id'])
 
 
 @app.route('/<int:category_id>/<int:item_id>/delete', methods=['GET', 'POST'])
@@ -362,17 +376,17 @@ def deleteItem(category_id, item_id):
 	"""
 	delete items within category
 	"""
-	if 'username' not in login_session:
+	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		item = db_item(db_session, item_id)
 		db_session.delete(item)
 		db_session.commit()
-		return redirect(url_for('allItems', category_id=category_id, item_id=item_id))
+		return redirect(url_for('allItems', category_id=category_id, item_id=item_id), user=login_session['user_id'])
 	else:
 		item = db_item(db_session, item_id)
 		category = db_category(db_session, category_id)
-		return render_template('deleteItem.html', category = category, item = item, name=item.name, description=item.description)
+		return render_template('deleteItem.html', category = category, item = item, name=item.name, description=item.description, user=login_session['user_id'])
 
 
 if __name__ == '__main__':

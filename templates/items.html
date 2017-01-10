@@ -2,6 +2,8 @@
 
 {% block content %}
 
+
+
 <a href="{{ url_for('allCategories') }}"><button type="button" class="btn btn-info btn-lg">Back</button></a>
 
 {% for i in items %}
@@ -10,11 +12,11 @@
 <p>{{i.description}}</p>
 
 
-
+{% if user == i.user_id %}
 <a href="{{ url_for('editItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info btn-lg">edit</button></a>
 
 <a href="{{ url_for('deleteItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info btn-lg">delete</button></a>
-
+{% endif %}
 
 {% endfor %}
 
