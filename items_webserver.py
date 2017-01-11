@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect
 from flask import url_for, flash, jsonify
 
@@ -16,6 +17,7 @@ import random, string
 # set up server for gconnect
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
+from oauth2client.client import OAuth2Credentials
 import httplib2
 import json
 from flask import make_response
@@ -164,7 +166,6 @@ def gconnect():
 
 @app.route('/gdisconnect')
 def gdisconnect():
-	# print login_session['username']
 	credentials = login_session
 
 	if credentials is None:
@@ -172,8 +173,8 @@ def gdisconnect():
 		response = make_response(json.dumps('Current user not connected.'), 401)
 		response.headers['Content-Type'] = 'application/json'
 		return response
-
-	# access_token = credentials.access_token
+	else:
+		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
 	print 'In gdisconnect access token is %s', login_session['access_token']
 	url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
 	h = httplib2.Http()
@@ -187,6 +188,7 @@ def gdisconnect():
 		del login_session['username']
 		del login_session['email']
 		del login_session['picture']
+		del login_session['user_id']
 		response = make_response(json.dumps('Successfully disconnected.'), 200)
 		response.headers['Content-Type'] = 'application/json'
 		categories=db_categories(db_session)
@@ -228,7 +230,10 @@ def loggedIn(login_session):
 	"""
 	check if user is logged in
 	"""
-	return login_session['user_id'] is not None 
+	if 'user_id' in login_session:
+		return True
+	else:
+		return False
 
 
 def owner(login_session, user_id):
@@ -236,6 +241,12 @@ def owner(login_session, user_id):
 	check if user is logged in
 	"""
 	return login_session['user_id'] == user_id
+
+
+@app.route('/delete')
+def delete():
+	del login_session['user_id']
+	return "deleted user_id"
 
 
 
@@ -276,13 +287,13 @@ def allCategories():
 	front page
 	"""
 	categories=db_categories(db_session)
-	user_id = login_session['user_id']
-	user = login_session['username']
 
 	if 'email' in login_session:
+		user_id = login_session['user_id']
+		user = login_session['username']
 		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
 	else:
-		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
+		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user="", response='')
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -317,11 +328,12 @@ def deleteCategory(category_id):
 	"""
 	delete category
 	"""
+	if 'user_id' not in login_session:
+		return redirect(url_for('showLogin'))
+
 	user_id = login_session['user_id']
 	user = login_session['username']
 
-	if 'user_id' not in login_session:
-		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		category = db_category(session, category_id)
 		db_session.delete(category)
@@ -340,10 +352,12 @@ def allItems(category_id):
 	"""
 	category = db_category(db_session, category_id)
 	items = db_items(db_session, category_id)
-	user_id = login_session['user_id']
-	user = login_session['username']
-	return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id)
-
+	if 'email' in login_session:
+		user_id = login_session['user_id']
+		user = login_session['username']
+		return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id)
+	else:
+		return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session), user='')
 
 
 @app.route('/<int:category_id>/<int:item_id>/edit', methods=['GET', 'POST'])
@@ -352,10 +366,12 @@ def editItem(category_id, item_id):
 	edit items within category
 	requires name and description
 	"""
-	user_id = login_session['user_id']
-	user = login_session['username']
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
+
+	user_id = login_session['user_id']
+	user = login_session['username']
+
 	if request.method == 'POST':
 		item = db_item(db_session, item_id)
 		if request.form['name'] and request.form['description']:
@@ -383,10 +399,12 @@ def newItem(category_id):
 	add items within category
 	requires name and description
 	"""
-	user_id = login_session['user_id']
-	user = login_session['username']
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
+
+	user_id = login_session['user_id']
+	user = login_session['username']
+
 	if request.method == 'POST':
 		if request.form['name'] and request.form['description']:
 			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id, user_id=getUserID(login_session['email']))
@@ -409,10 +427,13 @@ def deleteItem(category_id, item_id):
 	"""
 	delete items within category
 	"""
-	user_id = login_session['user_id']
-	user = login_session['username']
+
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
+
+	user_id = login_session['user_id']
+	user = login_session['username']
+
 	if request.method == 'POST':
 		item = db_item(db_session, item_id)
 		db_session.delete(item)
@@ -422,6 +443,23 @@ def deleteItem(category_id, item_id):
 		item = db_item(db_session, item_id)
 		category = db_category(db_session, category_id)
 		return render_template('deleteItem.html', user_is_logged_in=loggedIn(login_session), category = category, item = item, name=item.name, description=item.description, user=user, user_id=user_id, response='')
+
+
+"""
+static cache file buster
+"""
+@app.context_processor
+def override_url_for():
+    return dict(url_for=dated_url_for)
+
+def dated_url_for(endpoint, **values):
+    if endpoint == 'static':
+        filename = values.get('filename', None)
+        if filename:
+            file_path = os.path.join(app.root_path,
+                                     endpoint, filename)
+            values['q'] = int(os.stat(file_path).st_mtime)
+    return url_for(endpoint, **values)
 
 
 if __name__ == '__main__':
