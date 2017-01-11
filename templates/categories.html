@@ -2,12 +2,15 @@
 {% block content %}
 
 
-
 {% for i in categories %}
 <h2><a href="{{ url_for('allItems', category_id = i.id) }}">{{i.name}}</a></h2>
 <br>
 
-{% if user == i.user_id %}
+<p>user id is {{i.user_id}}</p>
+<p>user name is {{user_id}}</p>
+
+
+{% if user_id == i.user_id %}
 <a href="{{ url_for('deleteCategory', category_id = i.id) }}">delete</a>
 {% endif %}
 <br>

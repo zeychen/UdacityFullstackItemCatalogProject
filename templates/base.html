@@ -7,35 +7,46 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-<!--   <link type="text/css" rel="stylesheet" href="/static/css/main.css" />
-  <link type="text/css" rel="stylesheet" href="/static/css/welcome.css" />
-  <link type="text/css" rel="stylesheet" href="/static/css/form.css" />
-  <link type="text/css" rel="stylesheet" href="/static/css/front.css" />
-  <link type="text/css" rel="stylesheet" href="/static/css/post.css" />
-  <link type="text/css" rel="stylesheet" href="/static/css/newpost.css" />
-  <link type="text/css" rel="stylesheet" href="/static/css/editcomment.css" />
+  <link type="text/css" rel="stylesheet" href="/static/style.css" />
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css?family=Muli" rel="stylesheet" />
-  <link href="/static/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" media="screen"> -->
+  <!-- <link href="/static/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" media="screen"> -->
 
   <title>Items Catalog</title>
 </head>
 
 <body>
+
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <ul class="nav navbar-nav navbar-left">
+          <li>Item Catalog</li>
+        </ul>
+      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav navbar-right">
+          {% if user_is_logged_in %}
+          <li><a href="#"><button type="button" class="btn btn-info">{{user}}</button></a></li>
+          <li ><a href="{{ url_for('gdisconnect') }}"><button type="button" class="btn btn-info">logout <span class="glyphicon glyphicon-log-out"></span></button></a></li>
+          {% else %}
+          <li><a href="{{ url_for('showLogin') }}"><button type="button" class="btn btn-info btn-lg">login <span class="glyphicon glyphicon-log-in"></span></button></a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
   <h1>Item Catalog</h1>
 
-{% if user_is_logged_in %}
-
-
-  <p><a href="{{ url_for('gdisconnect') }}"><button type="button" class="btn btn-info btn-lg">logout</button></a></p>
-
-<p>{{user}} is logged in</p>
-
-{% else %}
-<p><a href="{{ url_for('showLogin') }}"><button type="button" class="btn btn-info btn-lg">login</button></a></p>
-
-{% endif %}
-
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 
   {% block content %}   
 

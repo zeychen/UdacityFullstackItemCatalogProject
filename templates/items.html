@@ -12,7 +12,11 @@
 <p>{{i.description}}</p>
 
 
-{% if user == i.user_id %}
+<p>user id is {{i.user_id}}</p>
+<p>user name is {{user_id}}</p>
+
+
+{% if user_id == i.user_id %}
 <a href="{{ url_for('editItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info btn-lg">edit</button></a>
 
 <a href="{{ url_for('deleteItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info btn-lg">delete</button></a>

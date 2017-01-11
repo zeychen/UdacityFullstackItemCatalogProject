@@ -1,3 +1,7 @@
+{% extends "base.html" %}
+
+{% block content %}
+
 <form method="post">
     <h2 class="sub-title">New Item</h2>
     <div class="">
@@ -21,3 +25,5 @@
 </form>
 
 <a href="{{ url_for('allItems', category_id = category.id) }}">cancel</a>
+
+{% endblock %}

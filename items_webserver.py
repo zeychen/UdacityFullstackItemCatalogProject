@@ -43,12 +43,16 @@ def showLogin():
 	"""
 	anti-forgery state token
 	"""
-	state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in xrange(32))
-	login_session['state'] = state
-    # return "The current session state is %s" % login_session['state']
-	return render_template('login.html', state=state)
-
+	if 'user_id' not in login_session:
+		state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+	                    for x in xrange(32))
+		login_session['state'] = state
+	    # return "The current session state is %s" % login_session['state']
+		return render_template('login.html', state=state)
+	else:
+		flash('You are already logged in')
+		categories=db_categories(db_session)
+		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -105,6 +109,7 @@ def gconnect():
         response = make_response(json.dumps('Current user is already connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
+        print "login-access token is = %s" % login_session['access_token']
         return response
 
     # Store the access token in the session for later use.
@@ -177,11 +182,12 @@ def gdisconnect():
 		del login_session['picture']
 		response = make_response(json.dumps('Successfully disconnected.'), 200)
 		response.headers['Content-Type'] = 'application/json'
-		return response
+		categories=db_categories(db_session)
+		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
 	else:
-		response = make_response(json.dumps('Failed to revoke token for given user.', 400))
-		response.headers['Content-Type'] = 'application/json'
-		return response
+		flash('Failed to revoke token for given user: ' + str(result.status) + 	  ' Error')
+		categories=db_categories(db_session)
+		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
 
 
 """
@@ -263,7 +269,13 @@ def allCategories():
 	front page
 	"""
 	categories=db_categories(db_session)
-	return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['user_id'])
+	user_id = login_session['user_id']
+	user = login_session['username']
+
+	if 'email' in login_session:
+		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
+	else:
+		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -280,7 +292,8 @@ def addCategory():
 			newCat = Categories(name=request.form['name'], user_id=getUserID(login_session['email']))
 			db_session.add(newCat)
 			db_session.commit
-			return redirect(url_for('allCategories', user=login_session['user_id']))
+			categories=db_categories(db_session)
+			return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
 		else:
 			error = "must enter name for category"
 			return render_template('newcat.html', error=error, user=login_session['user_id'])
@@ -299,7 +312,7 @@ def deleteCategory(category_id):
 		category = db_category(session, category_id)
 		db_session.delete(category)
 		db_session.commit()
-		return redirect(url_for('allCategories'))
+		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
 	else:
 		category = db_category(db_session, category_id)
 		return render_template('deleteCategory.html', name=category.name, user=login_session['user_id'])
@@ -313,7 +326,9 @@ def allItems(category_id):
 	"""
 	category = db_category(db_session, category_id)
 	items = db_items(db_session, category_id)
-	return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session), user=login_session['user_id'])
+	user_id = login_session['user_id']
+	user = login_session['username']
+	return render_template('items.html', items = items, category = category, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id)
 
 
 
@@ -332,7 +347,7 @@ def editItem(category_id, item_id):
 			item.name = request.form['name']
 			item.description = request.form['description']
 			db_session.commit()
-			return redirect(url_for('allItems', category_id=category_id, user=login_session['user_id']))
+			return redirect(url_for('allItems', category_id=category_id, user=user, user_id=user_id))
 		else:
 			name = request.form['name']
 			description = request.form['description']
@@ -359,7 +374,7 @@ def newItem(category_id):
 			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id, user_id=getUserID(login_session['email']))
 			db_session.add(newItem)
 			db_session.commit()
-			return redirect(url_for('allItems', category_id=category_id, user=login_session['user_id']))
+			return redirect(url_for('allItems', category_id=category_id, user=user, user_id=user_id))
 		else:
 			name = request.form['name']
 			description = request.form['description']
@@ -382,7 +397,7 @@ def deleteItem(category_id, item_id):
 		item = db_item(db_session, item_id)
 		db_session.delete(item)
 		db_session.commit()
-		return redirect(url_for('allItems', category_id=category_id, item_id=item_id), user=login_session['user_id'])
+		return redirect(url_for('allItems', category_id=category_id, item_id=item_id, user=user, user_id=user_id))
 	else:
 		item = db_item(db_session, item_id)
 		category = db_category(db_session, category_id)
