@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+  </script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="//apis.google.com/js/platform.js?onload=start"> </script>
 
-  <link type="text/css" rel="stylesheet" href="/static/style.css" />
+  <link rel="shortcut icon" href="{{url_for('static', filename='favicon.ico')}}" />
+  <link type="text/css" rel="stylesheet" href="{{url_for('static', filename='style.css')}}" />
+  <!-- <link type="text/css" rel="stylesheet" href="/static/style.css" /> -->
+  
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css?family=Muli" rel="stylesheet" />
-  <!-- <link href="/static/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" media="screen"> -->
 
   <title>Items Catalog</title>
 </head>
@@ -20,43 +25,34 @@
   <nav class="navbar navbar-default navbar-fixed-top">
     <div class="container">
       <div class="navbar-header">
-        <ul class="nav navbar-nav navbar-left">
-          <li>Item Catalog</li>
-        </ul>
+        <p id="item-logo" class="item-nav">Item Catalog</p>
       </div>
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav navbar-right">
           {% if user_is_logged_in %}
-          <li><a href="#"><button type="button" class="btn btn-info">{{user}}</button></a></li>
+          <li class="item-nav">{{user}}</li>
           <li ><a href="{{ url_for('gdisconnect') }}"><button type="button" class="btn btn-info">logout <span class="glyphicon glyphicon-log-out"></span></button></a></li>
           {% else %}
-          <li><a href="{{ url_for('showLogin') }}"><button type="button" class="btn btn-info btn-lg">login <span class="glyphicon glyphicon-log-in"></span></button></a></li>
+          <li><a href="{{ url_for('showLogin') }}"><button type="button" class="btn btn-info">login <span class="glyphicon glyphicon-log-in"></span></button></a></li>
           {% endif %}
         </ul>
       </div>
     </div>
   </nav>
-  <h1>Item Catalog</h1>
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
+  <div class="container">
   {% block content %}   
 
   {% endblock %}
-
-  <!-- jQuery to help with animations -->
-<!--   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-  <script src="/static/js/typewriter/typed.js"></script>
-  <script src="/static/js/typewriter.js"></script>
-  <script src="/static/js/animate.js"></script> -->
+  </div>
   
 
 </body>

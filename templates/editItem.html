@@ -2,27 +2,32 @@
 
 {% block content %}
 
-<form method="post">
-    <h2 class="sub-title">Update Item</h2>
-    <div class="">
-      <label class="user-label">Name</label>
-    </div>
-    <div class="">
-      <input type="text" name="name" value="{{name}}">
-    </div>
-    <div class="">
-      <label class="user-label">Description</label>
-    </div>
-    <div class="">
-      <textarea name="description" value="{{description}}">{{description}}</textarea>
-    </div>
-    <div class="">
-      <div class="error">{{error}}</div>
-    </div>
-    <div class="">
-      <input type="submit" value="Update">
-    </div>
-</form>
+<div class="card">
+  <form method="post">
+      <h2 class="sub-title">Update Item</h2>
+      <div class="">
+        <label class="user-label">Name</label>
+      </div>
+      <div class="">
+        <input type="text" name="name" value="{{name}}">
+      </div>
+      <div class="">
+        <label class="user-label">Description</label>
+      </div>
+      <div class="">
+        <textarea name="description" value="{{description}}">{{description}}</textarea>
+      </div>
+      <div class="">
+        <div class="error">{{error}}</div>
+      </div>
+      <div class="">
+        <input type="submit" value="Update">
+      </div>
+  </form>
+</div>
 
-<a href="{{ url_for('allItems', category_id = category.id) }}">cancel</a>
+<div class="back">
+  <a href="{{ url_for('allItems', category_id = category.id) }}"><button type="button" class="btn btn-info">Back</button></a>
+</div>
+
 {% endblock %}

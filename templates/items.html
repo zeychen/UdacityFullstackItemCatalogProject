@@ -4,32 +4,37 @@
 
 
 
-<a href="{{ url_for('allCategories') }}"><button type="button" class="btn btn-info btn-lg">Back</button></a>
 
-{% for i in items %}
-<h2>{{i.name}}</h2>
-<br>
-<p>{{i.description}}</p>
+	{% for i in items %}
+<div class="card">
+
+	<div class="card-heading"><h3>{{i.name}}</h3></div>
+	<div class="card-body">
+		<div class="card-description">{{i.description}}</div>
+		{% if user_id == i.user_id %}
+		<div class="card-control pull-right">
+			<a href="{{ url_for('deleteItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info">delete</button></a>
+		</div>
+		<div class="card-control">
+			<a href="{{ url_for('editItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info">edit</button></a>
+		</div>
+		
+		{% endif %}
+	</div>
 
 
-<p>user id is {{i.user_id}}</p>
-<p>user name is {{user_id}}</p>
+</div>
+	{% endfor %}
 
 
-{% if user_id == i.user_id %}
-<a href="{{ url_for('editItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info btn-lg">edit</button></a>
+<div class="add pull-right">
+	{% if user_is_logged_in %}
+	<a href="{{ url_for('newItem', category_id = category.id) }}"><button type="button" class="btn btn-info">add a new item</button></a>
+	{% endif %}
+</div>
 
-<a href="{{ url_for('deleteItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info btn-lg">delete</button></a>
-{% endif %}
-
-{% endfor %}
-
-<br>
-<br>
-
-{% if user_is_logged_in %}
-<a href="{{ url_for('newItem', category_id = category.id) }}"><button type="button" class="btn btn-info btn-lg">add a new item</button></a>
-{% endif %}
-
+<div class="back">
+	<a href="{{ url_for('allCategories') }}"><button type="button" class="btn btn-info">Back</button></a>
+</div>
 
 {% endblock %}

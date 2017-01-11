@@ -1,22 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 
+<ul class="list-group">
+	{% for i in categories %}
+	<li class="list-group-item">
+	  	<a href="{{ url_for('allItems', category_id = i.id) }}">
+	    {{i.name}}
+	  	</a>
+	  	{% if user_id == i.user_id %}
+		<a href="{{ url_for('deleteCategory', category_id = i.id) }}" class="badge">delete</a>
+		{% endif %}
+	</li>
+  	{% endfor %}
+</ul>
 
-{% for i in categories %}
-<h2><a href="{{ url_for('allItems', category_id = i.id) }}">{{i.name}}</a></h2>
-<br>
-
-<p>user id is {{i.user_id}}</p>
-<p>user name is {{user_id}}</p>
-
-
-{% if user_id == i.user_id %}
-<a href="{{ url_for('deleteCategory', category_id = i.id) }}">delete</a>
-{% endif %}
-<br>
-{% endfor %}
-
-<a href="{{ url_for('addCategory') }}">Add New Category</a>
+<div class="pull-right">
+	{% if user_is_logged_in %}
+	<a href="{{ url_for('addCategory') }}"><button type="button" class="btn btn-info">Add New Category</button></a>
+	{% endif %}
+</div>
 
 
 {% endblock %}

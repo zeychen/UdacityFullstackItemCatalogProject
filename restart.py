@@ -12,5 +12,5 @@ Base.metadata.drop_all(engine)
 # import items_dictionary
 os.system('python items_db_setup.py')
 print "db setup complete"
-os.system('python items_dictionary.py')
-print "import data complete"
+# os.system('python items_dictionary.py')
+# print "import data complete"

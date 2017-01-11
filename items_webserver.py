@@ -43,16 +43,23 @@ def showLogin():
 	"""
 	anti-forgery state token
 	"""
-	if 'user_id' not in login_session:
-		state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-	                    for x in xrange(32))
-		login_session['state'] = state
-	    # return "The current session state is %s" % login_session['state']
-		return render_template('login.html', state=state)
-	else:
-		flash('You are already logged in')
-		categories=db_categories(db_session)
-		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
+	state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
+	login_session['state'] = state
+    # return "The current session state is %s" % login_session['state']
+	return render_template('login.html', state=state)
+
+
+	# if 'user_id' not in login_session:
+	# 	state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+	#                     for x in xrange(32))
+	# 	login_session['state'] = state
+	#     # return "The current session state is %s" % login_session['state']
+	# 	return render_template('login.html', state=state)
+	# else:
+	# 	flash('You are already logged in')
+	# 	categories=db_categories(db_session)
+	# 	return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -185,7 +192,7 @@ def gdisconnect():
 		categories=db_categories(db_session)
 		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
 	else:
-		flash('Failed to revoke token for given user: ' + str(result.status) + 	  ' Error')
+		flash('Failed to revoke token for given user: ' + str(result.status) + 	  ' Error', 'error')
 		categories=db_categories(db_session)
 		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
 
@@ -287,18 +294,22 @@ def addCategory():
 
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
+
+	user_id = login_session['user_id']
+	user = login_session['username']
+
 	if request.method == 'POST':
 		if request.form['name']:
 			newCat = Categories(name=request.form['name'], user_id=getUserID(login_session['email']))
 			db_session.add(newCat)
 			db_session.commit
 			categories=db_categories(db_session)
-			return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
+			return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response=''))
 		else:
 			error = "must enter name for category"
-			return render_template('newcat.html', error=error, user=login_session['user_id'])
+			return render_template('newcat.html', error=error, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
 	else:
-		return render_template('newcat.html', user=login_session['user_id'])
+		return render_template('newcat.html', user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
 
 
 @app.route('/<int:category_id>/deletecategory', methods=['GET', 'POST'])
@@ -306,16 +317,19 @@ def deleteCategory(category_id):
 	"""
 	delete category
 	"""
+	user_id = login_session['user_id']
+	user = login_session['username']
+
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		category = db_category(session, category_id)
 		db_session.delete(category)
 		db_session.commit()
-		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
+		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response=''))
 	else:
 		category = db_category(db_session, category_id)
-		return render_template('deleteCategory.html', name=category.name, user=login_session['user_id'])
+		return render_template('deleteCategory.html', user_is_logged_in=loggedIn(login_session), name=category.name, user=user, user_id=user_id, response='')
 
 
 @app.route('/<int:category_id>/items')
@@ -338,6 +352,8 @@ def editItem(category_id, item_id):
 	edit items within category
 	requires name and description
 	"""
+	user_id = login_session['user_id']
+	user = login_session['username']
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
@@ -347,18 +363,18 @@ def editItem(category_id, item_id):
 			item.name = request.form['name']
 			item.description = request.form['description']
 			db_session.commit()
-			return redirect(url_for('allItems', category_id=category_id, user=user, user_id=user_id))
+			return redirect(url_for('allItems', user_is_logged_in=loggedIn(login_session), category_id=category_id, user=user, user_id=user_id))
 		else:
 			name = request.form['name']
 			description = request.form['description']
 			category = db_category(db_session, category_id)
 			item = db_item(db_session, item_id)
 			error = "must enter name and description"
-			return render_template('edititem.html', category = category, item = item, name=name, description=description, error=error, user=login_session['user_id'])
+			return render_template('edititem.html', category = category, item = item, name=name, description=description, error=error, user=user, user_id=user_id, response='', user_is_logged_in=loggedIn(login_session))
 	else:
 		category = db_category(db_session, category_id)
 		item = db_item(db_session, item_id)
-		return render_template('edititem.html', category = category, item = item, name=item.name, description=item.description, user=login_session['user_id'])
+		return render_template('edititem.html', user_is_logged_in=loggedIn(login_session), category = category, item = item, name=item.name, description=item.description, user=user, user_id=user_id, response='')
 
 
 @app.route('/<int:category_id>/item/new', methods=['GET', 'POST'])
@@ -367,6 +383,8 @@ def newItem(category_id):
 	add items within category
 	requires name and description
 	"""
+	user_id = login_session['user_id']
+	user = login_session['username']
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
@@ -374,16 +392,16 @@ def newItem(category_id):
 			newItem = Items(name=request.form['name'], description=request.form['description'], category_id = category_id, user_id=getUserID(login_session['email']))
 			db_session.add(newItem)
 			db_session.commit()
-			return redirect(url_for('allItems', category_id=category_id, user=user, user_id=user_id))
+			return redirect(url_for('allItems', user_is_logged_in=loggedIn(login_session), category_id=category_id, user=user, user_id=user_id))
 		else:
 			name = request.form['name']
 			description = request.form['description']
 			category = db_category(db_session, category_id)
 			error = "must enter name and description"
-			return render_template('newitem.html', category = category, name=name, description=description, error=error, user=login_session['user_id'])
+			return render_template('newitem.html', user_is_logged_in=loggedIn(login_session), category = category, name=name, description=description, error=error, user=user, user_id=user_id, response='')
 	else:
 		category = db_category(db_session, category_id)
-		return render_template('newitem.html', category = category, user=login_session['user_id'])
+		return render_template('newitem.html', user_is_logged_in=loggedIn(login_session), category = category, user=user, user_id=user_id, response='')
 
 
 @app.route('/<int:category_id>/<int:item_id>/delete', methods=['GET', 'POST'])
@@ -391,17 +409,19 @@ def deleteItem(category_id, item_id):
 	"""
 	delete items within category
 	"""
+	user_id = login_session['user_id']
+	user = login_session['username']
 	if 'user_id' not in login_session:
 		return redirect(url_for('showLogin'))
 	if request.method == 'POST':
 		item = db_item(db_session, item_id)
 		db_session.delete(item)
 		db_session.commit()
-		return redirect(url_for('allItems', category_id=category_id, item_id=item_id, user=user, user_id=user_id))
+		return redirect(url_for('allItems', user_is_logged_in=loggedIn(login_session), category_id=category_id, item_id=item_id, user=user, user_id=user_id))
 	else:
 		item = db_item(db_session, item_id)
 		category = db_category(db_session, category_id)
-		return render_template('deleteItem.html', category = category, item = item, name=item.name, description=item.description, user=login_session['user_id'])
+		return render_template('deleteItem.html', user_is_logged_in=loggedIn(login_session), category = category, item = item, name=item.name, description=item.description, user=user, user_id=user_id, response='')
 
 
 if __name__ == '__main__':

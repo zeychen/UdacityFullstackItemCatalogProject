@@ -2,16 +2,17 @@
 
 {% block content %}
 
-<form method="post">
-    <h2 class="sub-title">Are you sure you want to delete this category?</h2>
-    <h4>{{name}}</h4>
-    <div class="">
-      <input type="submit" value="Yes">
-    </div>
-    <div class="">
-      <a href="{{ url_for('allCategories') }}">no</a>
-    </div>
-    
-</form>
+<div class="card">
+  <form method="post">
+      <h4 class="sub-title">Are you sure you want to delete this category?</h4>
+      <h3 class="category-name">{{name}}</h3>
+      <div class="">
+        <input type="submit" value="Yes">
+      </div>
+  </form>
+</div>
 
+<div class="">
+  <a href="{{ url_for('allCategories') }}"><button type="button" class="btn btn-info">No</button></a>
+</div>
 {% endblock %}
