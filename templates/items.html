@@ -4,7 +4,15 @@
 
 
 {% if not items %}
-<div class="alert alert-info"><h4>There are no items in this category. Would you like to add some?</h4></div>
+	{% if user_is_logged_in %}
+	<div class="alert alert-info">
+		<h4>There are no items in this category. Would you like to add some?</h4>
+	</div>
+	{% else %}
+	<div class="alert alert-info">
+		<h4>There are no items in this category. Login to add to the category.</h4>
+	</div>
+	{% endif %}
 {% else %}
 	{% for i in items %}
 	<div class="card">

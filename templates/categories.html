@@ -2,7 +2,15 @@
 {% block content %}
 
 {% if not categories %}
-<div class="alert alert-info"><h4>There are no categories in the database. Would you like to add some?</h4></div>
+	{% if user_is_logged_in %}
+	<div class="alert alert-info">
+		<h4>There are no categories in the database. Would you like to add some?</h4>
+	</div>
+	{% else %}
+	<div class="alert alert-info">
+		<h4>There are no categories in the database. Login to add to the catalog.</h4>
+	</div>
+	{% endif %}
 {% else %}
 <ul class="list-group">
 	{% for i in categories %}

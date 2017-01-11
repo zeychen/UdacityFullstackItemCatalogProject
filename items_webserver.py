@@ -45,23 +45,16 @@ def showLogin():
 	"""
 	anti-forgery state token
 	"""
-	state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in xrange(32))
-	login_session['state'] = state
-    # return "The current session state is %s" % login_session['state']
-	return render_template('login.html', state=state)
-
-
-	# if 'user_id' not in login_session:
-	# 	state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-	#                     for x in xrange(32))
-	# 	login_session['state'] = state
-	#     # return "The current session state is %s" % login_session['state']
-	# 	return render_template('login.html', state=state)
-	# else:
-	# 	flash('You are already logged in')
-	# 	categories=db_categories(db_session)
-	# 	return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
+	if 'user_id' not in login_session:
+		state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+	                    for x in xrange(32))
+		login_session['state'] = state
+	    # return "The current session state is %s" % login_session['state']
+		return render_template('login.html', state=state)
+	else:
+		flash('You are already logged in')
+		categories=db_categories(db_session)
+		return render_template('categories.html', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -173,8 +166,7 @@ def gdisconnect():
 		response = make_response(json.dumps('Current user not connected.'), 401)
 		response.headers['Content-Type'] = 'application/json'
 		return response
-	else:
-		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
+
 	print 'In gdisconnect access token is %s', login_session['access_token']
 	url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
 	h = httplib2.Http()
@@ -192,7 +184,8 @@ def gdisconnect():
 		response = make_response(json.dumps('Successfully disconnected.'), 200)
 		response.headers['Content-Type'] = 'application/json'
 		categories=db_categories(db_session)
-		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'],response=''))
+		flash('You are now logged out')
+		return redirect(url_for('allCategories', categories = categories, user_is_logged_in=loggedIn(login_session), user='',response=''))
 	else:
 		flash('Failed to revoke token for given user: ' + str(result.status) + 	  ' Error', 'error')
 		categories=db_categories(db_session)
