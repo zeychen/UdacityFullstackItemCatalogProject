@@ -47,15 +47,15 @@ Login Required Decorator
 """
 
 
-# def login_required(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         if 'username' in login_session:
-#             return f(*args, **kwargs)
-#         else:
-#             flash("You need to login first before performing any action")
-#             return redirect(url_for('login', next=request.url))
-#     return decorated_function
+def login_required(route):
+    @wraps(route)
+    def decorated_function(*args, **kwargs):
+        if 'username' in login_session:
+            return route(*args, **kwargs)
+        else:
+            flash("You need to login first before performing any action")
+            return redirect(url_for('showLogin'))
+    return decorated_function
 
 
 """
@@ -72,7 +72,6 @@ def showLogin():
         state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                         for x in xrange(32))
         login_session['state'] = state
-        # return "The current session state is %s" % login_session['state']
         return render_template('login.html', state=state)
     else:
         flash('You are already logged in')
@@ -293,11 +292,19 @@ def allCategoriesJSON():
 @app.route('/<int:category_id>/items/JSON')
 def allItemsJSON(category_id):
     """
-    list all items in JSON format
+    list all items in a category in JSON format
     """
-    category = db_category(db_session, category_id)
     items = db_items(db_session, category_id)
     return jsonify(Items=[i.serialize for i in items])
+
+
+@app.route('/<int:category_id>/<int:item_id>/JSON')
+def itemJSON(category_id, item_id):
+    """
+    list specific item in category in JSON format
+    """
+    item = db_one_item(category_id, item_id)
+    return jsonify(Item=[i.serialize for i in items])
 
 
 """
@@ -338,6 +345,7 @@ def addCategory():
 
     user_id = login_session['user_id']
     user = login_session['username']
+    categories = db_categories(db_session)
 
     if request.method == 'POST':
         if request.form['name']:
@@ -370,15 +378,19 @@ def deleteCategory(category_id):
 
     user_id = login_session['user_id']
     user = login_session['username']
+    category = db_category(db_session, category_id)
 
     if request.method == 'POST':
-        category = db_category(db_session, category_id)
-        db_session.delete(category)
-        db_session.commit()
-        categories = db_categories(db_session)
-        return redirect(url_for('allCategories', categories=categories,
-                        user_is_logged_in=loggedIn(login_session),
-                        user=user, user_id=user_id, response=''))
+        if user_id == categories.user_id:
+            db_session.delete(category)
+            db_session.commit()
+            categories = db_categories(db_session)
+            return redirect(url_for('allCategories', categories=categories,
+                            user_is_logged_in=loggedIn(login_session),
+                            user=user, user_id=user_id, response=''))
+        else:
+            flash('You need to log in first')
+            return render_template('showLogin', response='')
     else:
         category = db_category(db_session, category_id)
         return render_template('deleteCategory.html',
@@ -407,6 +419,25 @@ def allItems(category_id):
                                user='')
 
 
+@app.route('/<int:category_id>/<int:item_id>/')
+def oneItem(category_id, item_id):
+    """
+    item within category
+    """
+    category = db_category(db_session, category_id)
+    item = db_one_items(category_id, category_id)
+    if 'email' in login_session:
+        user_id = login_session['user_id']
+        user = login_session['username']
+        return render_template('items.html', items=items, category=category,
+                               user_is_logged_in=loggedIn(login_session),
+                               user=user, user_id=user_id)
+    else:
+        return render_template('items.html', items=items, category=category,
+                               user_is_logged_in=loggedIn(login_session),
+                               user='')
+
+
 @app.route('/<int:category_id>/<int:item_id>/edit', methods=['GET', 'POST'])
 def editItem(category_id, item_id):
     """
@@ -418,29 +449,33 @@ def editItem(category_id, item_id):
 
     user_id = login_session['user_id']
     user = login_session['username']
+    item = db_item(db_session, item_id)
 
     if request.method == 'POST':
-        item = db_item(db_session, item_id)
-        if request.form['name'] and request.form['description']:
-            item = db_item(db_session, item_id)
-            item.name = request.form['name']
-            item.description = request.form['description']
-            db_session.commit()
-            return redirect(url_for('allItems',
-                            user_is_logged_in=loggedIn(login_session),
-                            category_id=category_id, user=user,
-                            user_id=user_id))
+        if user_id == item.user_id:
+            if request.form['name'] and request.form['description']:
+                item = db_item(db_session, item_id)
+                item.name = request.form['name']
+                item.description = request.form['description']
+                db_session.commit()
+                return redirect(url_for('allItems',
+                                user_is_logged_in=loggedIn(login_session),
+                                category_id=category_id, user=user,
+                                user_id=user_id))
+            else:
+                name = request.form['name']
+                description = request.form['description']
+                category = db_category(db_session, category_id)
+                item = db_item(db_session, item_id)
+                error = "must enter name and description"
+                return render_template('edititem.html', category=category,
+                                       item=item, name=name,
+                                       description=description, error=error,
+                                       user=user, user_id=user_id, response='',
+                                       user_is_logged_in=loggedIn(login_session))
         else:
-            name = request.form['name']
-            description = request.form['description']
-            category = db_category(db_session, category_id)
-            item = db_item(db_session, item_id)
-            error = "must enter name and description"
-            return render_template('edititem.html', category=category,
-                                   item=item, name=name,
-                                   description=description, error=error,
-                                   user=user, user_id=user_id, response='',
-                                   user_is_logged_in=loggedIn(login_session))
+            flash('You need to log in first')
+            return render_template('showLogin', response='')
     else:
         category = db_category(db_session, category_id)
         item = db_item(db_session, item_id)
@@ -504,15 +539,18 @@ def deleteItem(category_id, item_id):
 
     user_id = login_session['user_id']
     user = login_session['username']
-
+    item = db_item(db_session, item_id)
     if request.method == 'POST':
-        item = db_item(db_session, item_id)
-        db_session.delete(item)
-        db_session.commit()
-        return redirect(url_for('allItems',
-                        user_is_logged_in=loggedIn(login_session),
-                        category_id=category_id, item_id=item_id,
-                        user=user, user_id=user_id))
+        if user_id == item.user_id:
+            db_session.delete(item)
+            db_session.commit()
+            return redirect(url_for('allItems',
+                            user_is_logged_in=loggedIn(login_session),
+                            category_id=category_id, item_id=item_id,
+                            user=user, user_id=user_id))
+        else:
+            flash('You need to log in first')
+            return render_template('showLogin', response='')
     else:
         item = db_item(db_session, item_id)
         category = db_category(db_session, category_id)

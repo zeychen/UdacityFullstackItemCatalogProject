@@ -37,9 +37,17 @@ def db_items(db_session, category_id):
 
 def db_item(db_session, item_id):
     """
-    List specific item in specified category
+    List specific item in category
     """
     item = db_session.query(Items).filter_by(id=item_id).one()
+    return item
+
+
+def db_one_item(category_id, item_id):
+    """
+    List specific item in specified category
+    """
+    item = db_session.query(Items).filter_by(Items.id == item_id).filter_by(Items.category_id == category_id).one()
     return item
 
 
