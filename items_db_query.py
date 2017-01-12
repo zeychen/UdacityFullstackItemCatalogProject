@@ -12,45 +12,45 @@ db_session = DBSession()
 
 
 def db_categories(db_session):
-	"""
-	List all catgories in database sorted alphabetically
-	"""
-	categories = db_session.query(Categories).order_by(Categories.name).all()
-	return categories
+    """
+    List all catgories in database sorted alphabetically
+    """
+    categories = db_session.query(Categories).order_by(Categories.name).all()
+    return categories
 
 
 def db_category(db_session, category_id):
-	"""
-	List specific category id
-	"""
-	category = db_session.query(Categories).filter_by(id=category_id).one()
-	return category
+    """
+    List specific category id
+    """
+    category = db_session.query(Categories).filter_by(id=category_id).one()
+    return category
 
 
 def db_items(db_session, category_id):
-	"""
-	List all items in specified category
-	"""
-	items = db_session.query(Items).filter_by(category_id=category_id).order_by(Items.name).all()
-	return items
+    """
+    List all items in specified category
+    """
+    items = db_session.query(Items).filter_by(category_id=category_id).order_by(Items.name).all()
+    return items
 
 
 def db_item(db_session, item_id):
-	"""
-	List specific item in specified category
-	"""
-	item = db_session.query(Items).filter_by(id=item_id).one()
-	return item
+    """
+    List specific item in specified category
+    """
+    item = db_session.query(Items).filter_by(id=item_id).one()
+    return item
 
 
 def db_add_user(db_session, login_session):
-	"""
-	Insert user into database if new
-	"""
-	user_id = login_session['id']
-	user = db_session.query(Users).filter_by(id=user_id).all()
-	if not user:
-		user = User()
-		user.id = user_id
-		db_session.add(user)
-		db_session.commit()
+    """
+    Insert user into database if new
+    """
+    user_id = login_session['id']
+    user = db_session.query(Users).filter_by(id=user_id).all()
+    if not user:
+        user = User()
+        user.id = user_id
+        db_session.add(user)
+        db_session.commit()
