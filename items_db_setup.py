@@ -50,6 +50,8 @@ class Categories(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
 
+    items = relationship("Items", cascade="delete")
+
     @property
     def serialize(self):
         """
