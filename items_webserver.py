@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, request, redirect
-from flask import url_for, flash, jsonify
+from flask import url_for, flash, jsonify, g
 
 
 # import database functions
@@ -24,6 +24,11 @@ import json
 from flask import make_response
 import requests
 
+from functools import wraps
+
+
+
+
 app = Flask(__name__)
 
 CLIENT_ID = json.loads(
@@ -35,6 +40,23 @@ engine = create_engine('sqlite:///categories.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
+
+
+"""
+Login Required Decorator
+"""
+
+
+# def login_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         if 'username' in login_session:
+#             return f(*args, **kwargs)
+#         else:
+#             flash("You need to login first before performing any action")
+#             return redirect(url_for('login', next=request.url))
+#     return decorated_function
+
 
 """
 User Authentication
