@@ -55,7 +55,9 @@ def showLogin():
     else:
         flash('You are already logged in')
         categories = db_categories(db_session)
-        return render_template('categories.html', categories=categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
+        return render_template('categories.html', categories=categories,
+                               user_is_logged_in=loggedIn(login_session),
+                               user=login_session['username'])
 
 
 @app.route('/gconnect', methods=['POST'])
@@ -110,8 +112,8 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(json.dumps(
+                                 'Current user is already connected.'), 200)
         response.headers['Content-Type'] = 'application/json'
         print "login-access token is = %s" % login_session['access_token']
         return response
@@ -145,7 +147,8 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;'
+    output += '-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
 
     print "%s" % login_session['access_token']
@@ -165,12 +168,14 @@ def gdisconnect():
 
     if credentials is None:
         print 'Credentials is None'
-        response = make_response(json.dumps('Current user not connected.'), 401)
+        response = make_response(json.dumps(
+                                 'Current user not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
 
-    print 'In gdisconnect access token is %s', login_session['access_token']
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    access = login_session['access_token']
+    print 'In gdisconnect access token is %s', access
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print 'result is '
@@ -187,11 +192,16 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         categories = db_categories(db_session)
         flash('You are now logged out')
-        return redirect(url_for('allCategories', categories=categories, user_is_logged_in=loggedIn(login_session), user='', response=''))
+        return redirect(url_for('allCategories', categories=categories,
+                        user_is_logged_in=loggedIn(login_session),
+                        user='', response=''))
     else:
-        flash('Failed to revoke token for given user: ' + str(result.status) + ' Error', 'error')
+        flash('Failed to revoke token for given user: ' +
+              str(result.status) + ' Error', 'error')
         categories = db_categories(db_session)
-        return render_template('categories.html', categories=categories, user_is_logged_in=loggedIn(login_session), user=login_session['username'])
+        return render_template('categories.html', categories=categories,
+                               user_is_logged_in=loggedIn(login_session),
+                               user=login_session['username'])
 
 
 """
@@ -285,9 +295,13 @@ def allCategories():
     if 'email' in login_session:
         user_id = login_session['user_id']
         user = login_session['username']
-        return render_template('categories.html', categories=categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
+        return render_template('categories.html', categories=categories,
+                               user_is_logged_in=loggedIn(login_session),
+                               user=user, user_id=user_id, response='')
     else:
-        return render_template('categories.html', categories=categories, user_is_logged_in=loggedIn(login_session), user="", response='')
+        return render_template('categories.html', categories=categories,
+                               user_is_logged_in=loggedIn(login_session),
+                               user="", response='')
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -305,16 +319,23 @@ def addCategory():
 
     if request.method == 'POST':
         if request.form['name']:
-            newCat = Categories(name=request.form['name'], user_id=getUserID(login_session['email']))
+            newCat = Categories(name=request.form['name'],
+                                user_id=getUserID(login_session['email']))
             db_session.add(newCat)
             db_session.commit
             categories = db_categories(db_session)
-            return redirect(url_for('allCategories', categories=categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response=''))
+            return redirect(url_for('allCategories', categories=categories,
+                            user_is_logged_in=loggedIn(login_session),
+                            user=user, user_id=user_id, response=''))
         else:
             error = "must enter name for category"
-            return render_template('newcat.html', error=error, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
+            return render_template('newcat.html', error=error,
+                                   user_is_logged_in=loggedIn(login_session),
+                                   user=user, user_id=user_id, response='')
     else:
-        return render_template('newcat.html', user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response='')
+        return render_template('newcat.html',
+                               user_is_logged_in=loggedIn(login_session),
+                               user=user, user_id=user_id, response='')
 
 
 @app.route('/<int:category_id>/deletecategory', methods=['GET', 'POST'])
@@ -329,13 +350,19 @@ def deleteCategory(category_id):
     user = login_session['username']
 
     if request.method == 'POST':
-        category = db_category(session, category_id)
+        category = db_category(db_session, category_id)
         db_session.delete(category)
         db_session.commit()
-        return redirect(url_for('allCategories', categories=categories, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id, response=''))
+        categories = db_categories(db_session)
+        return redirect(url_for('allCategories', categories=categories,
+                        user_is_logged_in=loggedIn(login_session),
+                        user=user, user_id=user_id, response=''))
     else:
         category = db_category(db_session, category_id)
-        return render_template('deleteCategory.html', user_is_logged_in=loggedIn(login_session), name=category.name, user=user, user_id=user_id, response='')
+        return render_template('deleteCategory.html',
+                               user_is_logged_in=loggedIn(login_session),
+                               name=category.name, user=user, user_id=user_id,
+                               response='')
 
 
 @app.route('/<int:category_id>/items')
@@ -349,9 +376,13 @@ def allItems(category_id):
     if 'email' in login_session:
         user_id = login_session['user_id']
         user = login_session['username']
-        return render_template('items.html', items=items, category=category, user_is_logged_in=loggedIn(login_session), user=user, user_id=user_id)
+        return render_template('items.html', items=items, category=category,
+                               user_is_logged_in=loggedIn(login_session),
+                               user=user, user_id=user_id)
     else:
-        return render_template('items.html', items=items, category=category, user_is_logged_in=loggedIn(login_session), user='')
+        return render_template('items.html', items=items, category=category,
+                               user_is_logged_in=loggedIn(login_session),
+                               user='')
 
 
 @app.route('/<int:category_id>/<int:item_id>/edit', methods=['GET', 'POST'])
@@ -373,18 +404,29 @@ def editItem(category_id, item_id):
             item.name = request.form['name']
             item.description = request.form['description']
             db_session.commit()
-            return redirect(url_for('allItems', user_is_logged_in=loggedIn(login_session), category_id=category_id, user=user, user_id=user_id))
+            return redirect(url_for('allItems',
+                            user_is_logged_in=loggedIn(login_session),
+                            category_id=category_id, user=user,
+                            user_id=user_id))
         else:
             name = request.form['name']
             description = request.form['description']
             category = db_category(db_session, category_id)
             item = db_item(db_session, item_id)
             error = "must enter name and description"
-            return render_template('edititem.html', category=category, item=item, name=name, description=description, error=error, user=user, user_id=user_id, response='', user_is_logged_in=loggedIn(login_session))
+            return render_template('edititem.html', category=category,
+                                   item=item, name=name,
+                                   description=description, error=error,
+                                   user=user, user_id=user_id, response='',
+                                   user_is_logged_in=loggedIn(login_session))
     else:
         category = db_category(db_session, category_id)
         item = db_item(db_session, item_id)
-        return render_template('edititem.html', user_is_logged_in=loggedIn(login_session), category=category, item=item, name=item.name, description=item.description, user=user, user_id=user_id, response='')
+        return render_template('edititem.html',
+                               user_is_logged_in=loggedIn(login_session),
+                               category=category, item=item, name=item.name,
+                               description=item.description, user=user,
+                               user_id=user_id, response='')
 
 
 @app.route('/<int:category_id>/item/new', methods=['GET', 'POST'])
@@ -401,19 +443,32 @@ def newItem(category_id):
 
     if request.method == 'POST':
         if request.form['name'] and request.form['description']:
-            newItem = Items(name=request.form['name'], description=request.form['description'], category_id=category_id, user_id=getUserID(login_session['email']))
+            newItem = Items(name=request.form['name'],
+                            description=request.form['description'],
+                            category_id=category_id,
+                            user_id=getUserID(login_session['email']))
             db_session.add(newItem)
             db_session.commit()
-            return redirect(url_for('allItems', user_is_logged_in=loggedIn(login_session), category_id=category_id, user=user, user_id=user_id))
+            return redirect(url_for('allItems',
+                            user_is_logged_in=loggedIn(login_session),
+                            category_id=category_id, user=user,
+                            user_id=user_id))
         else:
             name = request.form['name']
             description = request.form['description']
             category = db_category(db_session, category_id)
             error = "must enter name and description"
-            return render_template('newitem.html', user_is_logged_in=loggedIn(login_session), category=category, name=name, description=description, error=error, user=user, user_id=user_id, response='')
+            return render_template('newitem.html',
+                                   user_is_logged_in=loggedIn(login_session),
+                                   category=category, name=name,
+                                   description=description, error=error,
+                                   user=user, user_id=user_id, response='')
     else:
         category = db_category(db_session, category_id)
-        return render_template('newitem.html', user_is_logged_in=loggedIn(login_session), category=category, user=user, user_id=user_id, response='')
+        return render_template('newitem.html',
+                               user_is_logged_in=loggedIn(login_session),
+                               category=category, user=user, user_id=user_id,
+                               response='')
 
 
 @app.route('/<int:category_id>/<int:item_id>/delete', methods=['GET', 'POST'])
@@ -432,11 +487,18 @@ def deleteItem(category_id, item_id):
         item = db_item(db_session, item_id)
         db_session.delete(item)
         db_session.commit()
-        return redirect(url_for('allItems', user_is_logged_in=loggedIn(login_session), category_id=category_id, item_id=item_id, user=user, user_id=user_id))
+        return redirect(url_for('allItems',
+                        user_is_logged_in=loggedIn(login_session),
+                        category_id=category_id, item_id=item_id,
+                        user=user, user_id=user_id))
     else:
         item = db_item(db_session, item_id)
         category = db_category(db_session, category_id)
-        return render_template('deleteItem.html', user_is_logged_in=loggedIn(login_session), category=category, item=item, name=item.name, description=item.description, user=user, user_id=user_id, response='')
+        return render_template('deleteItem.html',
+                               user_is_logged_in=loggedIn(login_session),
+                               category=category, item=item, name=item.name,
+                               description=item.description, user=user,
+                               user_id=user_id, response='')
 
 
 """
@@ -461,5 +523,5 @@ def dated_url_for(endpoint, **values):
 
 if __name__ == '__main__':
     app.secret_key = "xAZ8YHkG5rV6F3Wix4QG7plI"
-    app.debug = True
+    app.debug = False
     app.run(host='0.0.0.0', port=5000)

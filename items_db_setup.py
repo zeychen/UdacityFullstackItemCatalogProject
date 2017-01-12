@@ -59,7 +59,6 @@ class Categories(Base):
             'name': self.name,
             'id': self.id,
             'user_id': self.user_id,
-            'item_id': self.item_id,
         }
 
 
