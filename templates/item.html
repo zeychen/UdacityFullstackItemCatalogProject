@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="card">
+	<div class="card-heading"><h3>{{item.name}}</h3></div>
+	<div class="card-body">
+		<div class="card-description">{{item.description}}</div>
+		{% if user_id == item.user_id %}
+		<div class="card-control pull-right">
+			<a href="{{ url_for('deleteItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info">delete</button></a>
+		</div>
+		<div class="card-control">
+			<a href="{{ url_for('editItem', category_id = category.id, item_id = i.id) }}"><button type="button" class="btn btn-info">edit</button></a>
+		</div>
+		{% endif %}
+	</div>
+</div>
+
+<div class="add pull-right">
+	{% if user_is_logged_in %}
+	<a href="{{ url_for('newItem', category_id = category.id) }}"><button type="button" class="btn btn-info">add a new item</button></a>
+	{% endif %}
+</div>
+
+<div class="back">
+	<a href="{{ url_for('allCategories') }}"><button type="button" class="btn btn-info">Back</button></a>
+</div>
+
+{% endblock %}
