@@ -382,7 +382,7 @@ def allItems(category_id):
     """
     category = db_category(db_session, category_id)
     items = db_items(db_session, category_id)
-    if 'email' in login_session:
+    if 'user_id' in login_session:
         user_id = login_session['user_id']
         user = login_session['username']
         return render_template('items.html', items=items, category=category,
