@@ -27,8 +27,6 @@ import requests
 from functools import wraps
 
 
-
-
 app = Flask(__name__)
 
 CLIENT_ID = json.loads(
@@ -276,38 +274,6 @@ def delete():
 
 
 """
-JSON APIs
-"""
-
-
-@app.route('/catalog/JSON')
-def allCategoriesJSON():
-    """
-    list all categories in JSON format
-    """
-    categories = db_categories(db_session)
-    return jsonify(Categories=[i.serialize for i in categories])
-
-
-@app.route('/<int:category_id>/items/JSON')
-def allItemsJSON(category_id):
-    """
-    list all items in a category in JSON format
-    """
-    items = db_items(db_session, category_id)
-    return jsonify(Items=[i.serialize for i in items])
-
-
-@app.route('/<int:category_id>/<int:item_id>/JSON')
-def itemJSON(category_id, item_id):
-    """
-    list specific item in category in JSON format
-    """
-    item = db_one_item(category_id, item_id)
-    return jsonify(Item=[i.serialize for i in items])
-
-
-"""
 Webpages
 """
 
@@ -331,6 +297,15 @@ def allCategories():
         return render_template('categories.html', categories=categories,
                                user_is_logged_in=loggedIn(login_session),
                                user="", response='')
+
+
+@app.route('/catalog/JSON')
+def allCategoriesJSON():
+    """
+    list all categories in JSON format
+    """
+    categories = db_categories(db_session)
+    return jsonify(Categories=[i.serialize for i in categories])
 
 
 @app.route('/catalog/newcategory', methods=['GET', 'POST'])
@@ -419,23 +394,42 @@ def allItems(category_id):
                                user='')
 
 
+@app.route('/<int:category_id>/items/JSON')
+def allItemsJSON(category_id):
+    """
+    list all items in a category in JSON format
+    """
+    items = db_items(db_session, category_id)
+    return jsonify(Items=[i.serialize for i in items])
+
+
 @app.route('/<int:category_id>/<int:item_id>/')
 def oneItem(category_id, item_id):
     """
     item within category
     """
     category = db_category(db_session, category_id)
-    item = db_one_items(category_id, category_id)
-    if 'email' in login_session:
+    item = db_item(db_session, item_id)
+    if 'user_id' in login_session:
         user_id = login_session['user_id']
         user = login_session['username']
-        return render_template('items.html', items=items, category=category,
+        return render_template('item.html', item=item, category=category,
                                user_is_logged_in=loggedIn(login_session),
                                user=user, user_id=user_id)
     else:
-        return render_template('items.html', items=items, category=category,
+        return render_template('item.html', item=item, category=category,
                                user_is_logged_in=loggedIn(login_session),
                                user='')
+
+
+@app.route('/<int:category_id>/<int:item_id>/JSON')
+def oneItemJSON(category_id, item_id):
+    """
+    list specific item in category in JSON format
+    """
+    item = db_item(db_session, item_id)
+    print item.name
+    return jsonify(Item=[item.serialize])
 
 
 @app.route('/<int:category_id>/<int:item_id>/edit', methods=['GET', 'POST'])
@@ -450,11 +444,11 @@ def editItem(category_id, item_id):
     user_id = login_session['user_id']
     user = login_session['username']
     item = db_item(db_session, item_id)
+    category = db_category(db_session, category_id)
 
     if request.method == 'POST':
         if user_id == item.user_id:
             if request.form['name'] and request.form['description']:
-                item = db_item(db_session, item_id)
                 item.name = request.form['name']
                 item.description = request.form['description']
                 db_session.commit()
@@ -465,20 +459,17 @@ def editItem(category_id, item_id):
             else:
                 name = request.form['name']
                 description = request.form['description']
-                category = db_category(db_session, category_id)
-                item = db_item(db_session, item_id)
                 error = "must enter name and description"
                 return render_template('edititem.html', category=category,
                                        item=item, name=name,
                                        description=description, error=error,
                                        user=user, user_id=user_id, response='',
-                                       user_is_logged_in=loggedIn(login_session))
+                                       user_is_logged_in=loggedIn
+                                       (login_session))
         else:
             flash('You need to log in first')
             return render_template('showLogin', response='')
     else:
-        category = db_category(db_session, category_id)
-        item = db_item(db_session, item_id)
         return render_template('edititem.html',
                                user_is_logged_in=loggedIn(login_session),
                                category=category, item=item, name=item.name,
@@ -583,5 +574,5 @@ def dated_url_for(endpoint, **values):
 
 if __name__ == '__main__':
     app.secret_key = "xAZ8YHkG5rV6F3Wix4QG7plI"
-    app.debug = False
+    app.debug = True
     app.run(host='0.0.0.0', port=5000)

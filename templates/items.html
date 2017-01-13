@@ -16,7 +16,7 @@
 {% else %}
 	{% for i in items %}
 	<div class="card">
-		<div class="card-heading"><h3>{{i.name}}</h3></div>
+		<div class="card-heading"><h3><a href="{{ url_for('oneItem', category_id = category.id, item_id = i.id) }}">{{i.name}}</a></h3></div>
 		<div class="card-body">
 			<div class="card-description">{{i.description}}</div>
 			{% if user_id == i.user_id %}

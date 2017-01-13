@@ -43,12 +43,12 @@ def db_item(db_session, item_id):
     return item
 
 
-def db_one_item(category_id, item_id):
-    """
-    List specific item in specified category
-    """
-    item = db_session.query(Items).filter_by(Items.id == item_id).filter_by(Items.category_id == category_id).one()
-    return item
+# def db_one_item(category_id, item_id):
+#     """
+#     List specific item in specified category
+#     """
+#     item = db_session.query(Items).filter_by(Items.id == item_id).filter_by(Items.category_id == category_id).one()
+#     return item
 
 
 def db_add_user(db_session, login_session):
